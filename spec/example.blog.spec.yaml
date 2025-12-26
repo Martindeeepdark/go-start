@@ -1,0 +1,497 @@
+# API 规范文件示例
+# 这是一个博客 API 的完整规范定义
+
+spec: "1.0"
+kind: API
+name: BlogAPI
+version: v1
+
+# 项目配置
+project:
+  module: github.com/yourname/blog-api
+  author: Your Name
+  description: 一个简单的博客管理系统 API
+
+# 数据模型定义
+models:
+  # 用户模型
+  - name: User
+    table: users
+    comment: 用户表
+    fields:
+      - name: id
+        type: uint
+        primary: true
+        autoIncrement: true
+        comment: 用户ID
+
+      - name: username
+        type: string
+        size: 50
+        notNull: true
+        unique: true
+        comment: 用户名
+
+      - name: email
+        type: string
+        size: 100
+        notNull: true
+        unique: true
+        comment: 邮箱
+
+      - name: password
+        type: string
+        size: 255
+        notNull: true
+        json: "-"  # 不在 JSON 中输出
+        comment: 密码（加密存储）
+
+      - name: avatar
+        type: string
+        size: 255
+        comment: 头像URL
+
+      - name: bio
+        type: string
+        size: 500
+        comment: 个人简介
+
+      - name: status
+        type: int
+        default: 1
+        comment: 状态 1-正常 0-禁用
+
+      - name: created_at
+        type: timestamp
+        autoCreateTime: true
+        comment: 创建时间
+
+      - name: updated_at
+        type: timestamp
+        autoUpdateTime: true
+        comment: 更新时间
+
+  # 文章模型
+  - name: Article
+    table: articles
+    comment: 文章表
+    fields:
+      - name: id
+        type: uint
+        primary: true
+        autoIncrement: true
+        comment: 文章ID
+
+      - name: title
+        type: string
+        size: 200
+        notNull: true
+        comment: 文章标题
+
+      - name: slug
+        type: string
+        size: 200
+        unique: true
+        index: true
+        comment: URL友好的标识符
+
+      - name: content
+        type: text
+        notNull: true
+        comment: 文章内容
+
+      - name: summary
+        type: string
+        size: 500
+        comment: 文章摘要
+
+      - name: cover_image
+        type: string
+        size: 255
+        comment: 封面图片
+
+      - name: author_id
+        type: uint
+        notNull: true
+        foreignKey: users.id
+        comment: 作者ID
+
+      - name: category_id
+        type: uint
+        comment: 分类ID
+
+      - name: status
+        type: int
+        default: 1
+        comment: 状态 1-草稿 2-发布 3-下线
+
+      - name: view_count
+        type: int
+        default: 0
+        comment: 浏览次数
+
+      - name: created_at
+        type: timestamp
+        autoCreateTime: true
+        comment: 创建时间
+
+      - name: updated_at
+        type: timestamp
+        autoUpdateTime: true
+        comment: 更新时间
+
+      - name: published_at
+        type: timestamp
+        comment: 发布时间
+
+  # 分类模型
+  - name: Category
+    table: categories
+    comment: 分类表
+    fields:
+      - name: id
+        type: uint
+        primary: true
+        autoIncrement: true
+
+      - name: name
+        type: string
+        size: 50
+        notNull: true
+        unique: true
+        comment: 分类名称
+
+      - name: slug
+        type: string
+        size: 50
+        unique: true
+        comment: URL标识
+
+      - name: description
+        type: string
+        size: 500
+        comment: 分类描述
+
+      - name: parent_id
+        type: uint
+        default: 0
+        comment: 父分类ID
+
+      - name: sort
+        type: int
+        default: 0
+        comment: 排序
+
+      - name: created_at
+        type: timestamp
+        autoCreateTime: true
+
+      - name: updated_at
+        type: timestamp
+        autoUpdateTime: true
+
+  # 标签模型
+  - name: Tag
+    table: tags
+    comment: 标签表
+    fields:
+      - name: id
+        type: uint
+        primary: true
+        autoIncrement: true
+
+      - name: name
+        type: string
+        size: 50
+        notNull: true
+        unique: true
+        comment: 标签名称
+
+      - name: slug
+        type: string
+        size: 50
+        unique: true
+        comment: URL标识
+
+      - name: color
+        type: string
+        size: 20
+        comment: 标签颜色
+
+      - name: created_at
+        type: timestamp
+        autoCreateTime: true
+
+      - name: updated_at
+        type: timestamp
+        autoUpdateTime: true
+
+  # 评论模型
+  - name: Comment
+    table: comments
+    comment: 评论表
+    fields:
+      - name: id
+        type: uint
+        primary: true
+        autoIncrement: true
+
+      - name: article_id
+        type: uint
+        notNull: true
+        foreignKey: articles.id
+        index: true
+        comment: 文章ID
+
+      - name: user_id
+        type: uint
+        notNull: true
+        foreignKey: users.id
+        comment: 用户ID
+
+      - name: parent_id
+        type: uint
+        default: 0
+        comment: 父评论ID（0表示一级评论）
+
+      - name: content
+        type: text
+        notNull: true
+        comment: 评论内容
+
+      - name: status
+        type: int
+        default: 1
+        comment: 状态 1-正常 0-待审核 2-已拒绝
+
+      - name: like_count
+        type: int
+        default: 0
+        comment: 点赞数
+
+      - name: created_at
+        type: timestamp
+        autoCreateTime: true
+
+      - name: updated_at
+        type: timestamp
+        autoUpdateTime: true
+
+# API 端点定义
+endpoints:
+  # 文章相关接口
+  - method: POST
+    path: /articles
+    handler: CreateArticle
+    auth: true
+    permission: article.create
+    validate: CreateArticleRequest
+    comment: 创建文章
+    cache:
+      enabled: false
+
+  - method: GET
+    path: /articles
+    handler: ListArticles
+    auth: false
+    comment: 获取文章列表
+    cache:
+      enabled: true
+      ttl: 300
+    pagination:
+      page: 1
+      pageSize: 20
+      maxPageSize: 100
+
+  - method: GET
+    path: /articles/:id
+    handler: GetArticle
+    auth: false
+    comment: 获取文章详情
+    cache:
+      enabled: true
+      ttl: 600
+
+  - method: PUT
+    path: /articles/:id
+    handler: UpdateArticle
+    auth: true
+    permission: article.update
+    validate: UpdateArticleRequest
+    comment: 更新文章
+
+  - method: DELETE
+    path: /articles/:id
+    handler: DeleteArticle
+    auth: true
+    permission: article.delete
+    comment: 删除文章
+
+  - method: POST
+    path: /articles/:id/publish
+    handler: PublishArticle
+    auth: true
+    permission: article.publish
+    comment: 发布文章
+
+  # 用户相关接口
+  - method: POST
+    path: /auth/register
+    handler: Register
+    auth: false
+    validate: RegisterRequest
+    comment: 用户注册
+
+  - method: POST
+    path: /auth/login
+    handler: Login
+    auth: false
+    validate: LoginRequest
+    comment: 用户登录
+
+  - method: GET
+    path: /user/profile
+    handler: GetProfile
+    auth: true
+    comment: 获取当前用户信息
+
+  - method: PUT
+    path: /user/profile
+    handler: UpdateProfile
+    auth: true
+    validate: UpdateProfileRequest
+    comment: 更新用户信息
+
+  # 评论相关接口
+  - method: POST
+    path: /articles/:article_id/comments
+    handler: CreateComment
+    auth: true
+    validate: CreateCommentRequest
+    comment: 发表评论
+
+  - method: GET
+    path: /articles/:article_id/comments
+    handler: ListComments
+    auth: false
+    pagination: true
+    comment: 获取文章评论列表
+
+  # 分类和标签接口
+  - method: GET
+    path: /categories
+    handler: ListCategories
+    auth: false
+    cache:
+      enabled: true
+      ttl: 3600
+    comment: 获取分类列表
+
+  - method: GET
+    path: /tags
+    handler: ListTags
+    auth: false
+    cache:
+      enabled: true
+      ttl: 3600
+    comment: 获取标签列表
+
+# 请求验证定义
+requests:
+  - name: CreateArticleRequest
+    comment: 创建文章请求
+    fields:
+      - name: title
+        rules: required,min=5,max=200
+        comment: 文章标题
+
+      - name: content
+        rules: required,min=10
+        comment: 文章内容
+
+      - name: summary
+        rules: max=500
+        comment: 文章摘要
+
+      - name: category_id
+        rules: required,numeric
+        comment: 分类ID
+
+      - name: tag_ids
+        rules: array
+        comment: 标签ID列表
+
+  - name: UpdateArticleRequest
+    comment: 更新文章请求
+    fields:
+      - name: title
+        rules: omitempty,min=5,max=200
+
+      - name: content
+        rules: omitempty,min=10
+
+      - name: summary
+        rules: omitempty,max=500
+
+      - name: category_id
+        rules: omitempty,numeric
+
+      - name: status
+        rules: omitempty,in=1,2,3
+
+  - name: RegisterRequest
+    comment: 注册请求
+    fields:
+      - name: username
+        rules: required,min=3,max=20,alphanum
+        comment: 用户名
+
+      - name: email
+        rules: required,email
+        comment: 邮箱
+
+      - name: password
+        rules: required,min=6,max=20
+        comment: 密码
+
+  - name: LoginRequest
+    comment: 登录请求
+    fields:
+      - name: username
+        rules: required
+        comment: 用户名
+
+      - name: password
+        rules: required
+        comment: 密码
+
+# 业务规则定义
+rules:
+  - name: ArticleViewIncrement
+    comment: 文章浏览次数自增
+    trigger: get_article
+    action: |
+      if article != nil {
+          article.view_count++
+          db.Save(article)
+      }
+
+  - name: CommentNotification
+    comment: 评论通知
+    trigger: create_comment
+    action: |
+      if comment.parent_id > 0 {
+          // 回复评论，通知被回复的用户
+          sendNotification(comment.parent_author_id, "您的评论有新回复")
+      } else {
+          // 评论文章，通知文章作者
+          sendNotification(article.author_id, "您的文章有新评论")
+      }
+
+  - name: SlugGeneration
+    comment: 自动生成文章slug
+    trigger: before_create_article
+    action: |
+      if article.slug == "" {
+          article.slug = generateSlug(article.title)
+      }

@@ -23,6 +23,12 @@ import (
 	"go.uber.org/zap"
 )
 
+// @title           {{.ProjectName}} API
+// @version         1.0
+// @description     {{if .Description}}{{.Description}}{{else}}{{.ProjectName}} 服务的 API 文档{{end}}
+// @host            localhost:{{.ServerPort}}
+// @BasePath        /api/v1
+
 func main() {
 	// Load configuration
 	cfg, err := config.Load()

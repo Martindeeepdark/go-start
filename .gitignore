@@ -1,19 +1,70 @@
-/guanxin_goweb.exe
-/guanxin_goweb.exe~
-/log/*.log
-/log/*.png
-/log/temp/*.xlsx
-/log/*.xlsx
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Test output
+*.test
+*.out
+
+# Go workspace file
+go.work
+
+# IDEs
 .idea/
-/guanxin_goweb2.exe
-/log/*.wf
-/conf/*.yaml
-/*.xlsx
-/controllers/http/.DS_Store
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
 go.env
-vendor
-/.DS_Store
-/models/.DS_Store
-/models/dao/.DS_Store
-tmp
-screenlog.0
+
+# Generated files
+*.generated.go
+wire_gen.go
+
+# Test projects
+*test*/
+*-api/
+
+# Logs
+*.log
+logs/
+log/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+dist/
+build/
+
+# Coverage
+*.out
+coverage.html
+coverage.txt
+
+# Dependency directories
+vendor/
+
+# Debug files
+debug
+__debug_bin
+.claude
