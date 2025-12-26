@@ -111,7 +111,36 @@ func (g *DatabaseGenerator) Generate() error {
 		return fmt.Errorf("生成 Repository 层失败: %w", err)
 	}
 
+	// 6. 生成 Service 层
+	fmt.Println("\n📦 正在生成 Service 层...")
+	if err := g.generateServiceLayer(); err != nil {
+		return fmt.Errorf("生成 Service 层失败: %w", err)
+	}
+
+	// 7. 生成 Controller 层
+	fmt.Println("\n📦 正在生成 Controller 层...")
+	if err := g.generateControllerLayer(); err != nil {
+		return fmt.Errorf("生成 Controller 层失败: %w", err)
+	}
+
+	// 8. 生成路由注册
+	fmt.Println("\n📦 正在生成路由注册...")
+	if err := g.GenerateRoutes(getTablesFromNames(g.config.Tables), "github.com/yourname/project"); err != nil {
+		return fmt.Errorf("生成路由失败: %w", err)
+	}
+
+	fmt.Println("\n✅ 所有代码生成完成！")
+
 	return nil
+}
+
+// getTablesFromNames 从表名列表创建 TableInfo 列表
+func getTablesFromNames(names []string) []TableInfo {
+	var tables []TableInfo
+	for _, name := range names {
+		tables = append(tables, TableInfo{Name: name})
+	}
+	return tables
 }
 
 // connectGORMDB 使用 GORM 连接数据库
@@ -182,6 +211,54 @@ func (g *DatabaseGenerator) generateRepositoryLayer() error {
 		}
 
 		if err := g.GenerateRepository(TableInfo{Name: tableName}, config); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// generateServiceLayer 生成 Service 层
+func (g *DatabaseGenerator) generateServiceLayer() error {
+	// TODO: 从配置读取是否启用缓存
+	withCache := true // 默认启用缓存
+
+	for _, tableName := range g.config.Tables {
+		// 简单的表名转模型名
+		modelName := toModelName(tableName)
+
+		// 配置 Service 生成
+		config := ServiceConfig{
+			TableName:   tableName,
+			ModelName:   modelName,
+			PackageName: "service",
+			ModulePath:  "github.com/yourname/project", // TODO: 从配置读取
+			WithCache:   withCache,
+		}
+
+		if err := g.GenerateService(TableInfo{Name: tableName}, config); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// generateControllerLayer 生成 Controller 层
+func (g *DatabaseGenerator) generateControllerLayer() error {
+	for _, tableName := range g.config.Tables {
+		// 简单的表名转模型名
+		modelName := toModelName(tableName)
+
+		// 配置 Controller 生成
+		config := ControllerConfig{
+			TableName:   tableName,
+			ModelName:   modelName,
+			PackageName: "controller",
+			ModulePath:  "github.com/yourname/project", // TODO: 从配置读取
+		}
+
+		if err := g.GenerateController(TableInfo{Name: tableName}, config); err != nil {
 			return err
 		}
 	}
