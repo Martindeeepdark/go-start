@@ -212,7 +212,8 @@ func connectGORMDB(dsn string) (*gorm.DB, error) {
 // tableExists 检查表是否存在
 func (g *DatabaseGenerator) tableExists(db *gorm.DB, tableName string) bool {
 	var count int64
-	db.Raw("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = ?", tableName).Scan(&count)
+	// 查询当前数据库中的表
+	db.Raw("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?", tableName).Scan(&count)
 	return count > 0
 }
 
