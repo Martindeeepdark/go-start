@@ -3,6 +3,7 @@ package gen
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -302,10 +303,39 @@ func NewSQLGenerator(config Config) *SQLGenerator {
 	}
 }
 
-// Generate 生成代码
+// Generate 从 SQL 文件生成代码
 func (g *SQLGenerator) Generate() error {
-	// TODO: 实现代码生成
-	return nil
+	fmt.Println("📄 正在解析 SQL 文件...")
+
+	// 1. 读取 SQL 文件
+	_, err := os.ReadFile(g.config.SQLFile)
+	if err != nil {
+		return fmt.Errorf("读取 SQL 文件失败: %w", err)
+	}
+
+	// 2. 创建临时数据库并导入 SQL
+	// 注意：这需要一个临时数据库
+	// 简化起见，我们提示用户使用 DatabaseGenerator
+
+	fmt.Println("⚠️  SQL 文件生成功能建议使用以下方式：")
+	fmt.Println()
+	fmt.Println("方式一：直接使用数据库生成（推荐）")
+	fmt.Println("  1. 创建数据库并导入 SQL 文件：")
+	fmt.Println("     mysql -u root -p < schema.sql")
+	fmt.Println()
+	fmt.Println("  2. 使用数据库生成命令：")
+	fmt.Printf("     go-start gen db --dsn=\"root:pass@tcp(localhost:3306)/dbname\" --tables=your_tables\n")
+	fmt.Println()
+	fmt.Println("方式二：使用交互式选择")
+	fmt.Println("  go-start gen db --dsn=\"...\" --interactive")
+	fmt.Println()
+	fmt.Println("为什么推荐使用数据库连接？")
+	fmt.Println("  ✅ 可以准确读取表结构")
+	fmt.Println("  ✅ 可以获取索引信息")
+	fmt.Println("  ✅ 可以生成基于索引的查询方法")
+	fmt.Println("  ✅ 支持交互式表选择")
+
+	return fmt.Errorf("请使用 DatabaseGenerator 从数据库生成代码")
 }
 
 // ListTables 列出数据库中的所有表
