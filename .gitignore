@@ -5,6 +5,8 @@
 *.so
 *.dylib
 bin/
+go-start
+go-start.exe
 
 # Test output
 *.test
