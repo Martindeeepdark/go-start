@@ -10,6 +10,7 @@ bin/
 
 # Go workspace file
 go.work
+.go.version
 
 # Dependency directories
 vendor/

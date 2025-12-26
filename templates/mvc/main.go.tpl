@@ -48,7 +48,7 @@ func main() {
 	defer logger.Sync()
 
 	// Initialize database
-	db, err := database.New(cfg.Database)
+	db, err := database.New(&cfg.Database)
 	if err != nil {
 		logger.Fatal("Failed to connect database", zap.Error(err))
 	}
@@ -57,7 +57,7 @@ func main() {
 
 	{{if .WithRedis}}
 	// Initialize Redis
-	cacheClient, err := cache.New(cfg.Redis)
+	cacheClient, err := cache.New(&cfg.Redis)
 	if err != nil {
 		logger.Fatal("Failed to connect redis", zap.Error(err))
 	}
@@ -92,8 +92,13 @@ func main() {
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	logger.Info("Starting server", zap.String("addr", addr))
 
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: r.Engine(),
+	}
+
 	go func() {
-		if err := r.Run(addr); err != nil && err != http.ErrServerClosed {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Failed to start server", zap.Error(err))
 		}
 	}()
@@ -108,7 +113,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := r.Engine().Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(ctx); err != nil {
 		logger.Error("Server forced to shutdown", zap.Error(err))
 	}
 
@@ -127,7 +132,7 @@ func registerRoutes(r *router.Router, ctrl *controller.Controller) {
 	{{end}}
 
 	// API v1
-	v1 := r.Group("/api/v1")
+	_ = r.Group("/api/v1")
 	{
 		// Example: User routes
 		// user := v1.Group("/users")

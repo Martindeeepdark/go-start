@@ -29,7 +29,9 @@
 
 - Go 1.25.4 or higher
 - MySQL 5.7+ or PostgreSQL 12+
+{{if .WithRedis}}
 - Redis 6.0+
+{{end}}
 
 ### Installation
 
@@ -86,7 +88,12 @@ Edit `config.yaml` to configure:
 
 - Server port
 - Database connection
+{{if .WithRedis}}
 - Redis connection
+{{end}}
+{{if .WithSwagger}}
+- Swagger documentation is available at `/swagger/index.html`
+{{end}}
 
 ## Development
 
