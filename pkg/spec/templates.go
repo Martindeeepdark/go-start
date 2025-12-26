@@ -12,7 +12,7 @@ import (
 // {{.Model.Name}} {{.Model.Comment}}
 type {{.Model.Name}} struct {
 	{{- range $field := .Model.Fields}}
-	{{$field.Name | ToCamelCase}} {{getGoType $field.Type}} ` + "`" + `gorm:"{{getGormTag $field}}" json:"{{getJSONTag $field.Name $field.JSON}}"` + "`" + ` // {{$field.Comment}}
+    {{$field.Name | ToCamelCase}} {{getGoType2 $field}} ` + "`" + `gorm:"{{getGormTag $field}}{{getIndexTags $field.Name $.Model.Indexes}}" json:"{{getJSONTag $field.Name $field.JSON}}"` + "`" + ` // {{$field.Comment}}
 	{{- end}}
 }
 
@@ -25,9 +25,9 @@ func ({{.Model.Name}}) TableName() string {
 const repositoryTemplate = `package repository
 
 import (
-	"context"
-	"gorm.io/gorm"
-	"github.com/{{.Spec.Project.Module}}/internal/model"
+    "context"
+    "gorm.io/gorm"
+    "{{.Spec.Project.Module}}/internal/model"
 )
 
 // {{.Model.Name}}Repository {{.Model.Name}}数据访问层
@@ -93,14 +93,16 @@ func (r *{{.Model.Name}}Repository) List(ctx context.Context, page, pageSize int
 const serviceTemplate = `package service
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "time"
 
-	"github.com/{{.Spec.Project.Module}}/internal/model"
-	"github.com/{{.Spec.Project.Module}}/internal/repository"
-	"github.com/{{.Spec.Project.Module}}/pkg/cache"
+    "{{.Spec.Project.Module}}/internal/model"
+    "{{.Spec.Project.Module}}/internal/repository"
+    {{- if or .GetCacheEnabled .ListCacheEnabled}}
+    "github.com/yourname/go-start/pkg/commonadapter"
+    {{- end}}
 )
 
 // 定义业务错误
@@ -116,49 +118,69 @@ var (
 //   - 处理数据的缓存策略
 //   - 实现业务的校验和规则
 type {{.Model.Name}}Service struct {
-	repo  *repository.{{.Model.Name}}Repository
-	cache *cache.Cache
+    repo  *repository.{{.Model.Name}}Repository
 }
 
 // New{{.Model.Name}}Service 创建 {{.Model.Name}} 服务实例
-func New{{.Model.Name}}Service(repo *repository.{{.Model.Name}}Repository, cache *cache.Cache) *{{.Model.Name}}Service {
-	return &{{.Model.Name}}Service{
-		repo:  repo,
-		cache: cache,
-	}
+func New{{.Model.Name}}Service(repo *repository.{{.Model.Name}}Repository) *{{.Model.Name}}Service {
+    return &{{.Model.Name}}Service{
+        repo:  repo,
+    }
 }
 
 // Create 创建 {{.Model.Name}}
 func (s *{{.Model.Name}}Service) Create(ctx context.Context, {{.Model.Name | ToLowerCamelCase}} *model.{{.Model.Name}}) error {
-	if err := s.repo.Create(ctx, {{.Model.Name | ToLowerCamelCase}}); err != nil {
-		return fmt.Errorf("创建{{.Model.Name}}失败: %w", err)
-	}
-	return nil
+    if err := s.repo.Create(ctx, {{.Model.Name | ToLowerCamelCase}}); err != nil {
+        return fmt.Errorf("创建{{.Model.Name}}失败: %w", err)
+    }
+    _, cache, _, _, _, _ := commonadapter.Abilities()
+    _ = cache.Delete(fmt.Sprintf("{{.Model.Name | ToLowerCamelCase}}:%d", {{.Model.Name | ToLowerCamelCase}}.ID))
+    _ = cache.DeleteByPattern("{{.Model.Name | ToLowerCamelCase}}:list:*")
+    return nil
 }
 
 // GetByID 根据 ID 获取 {{.Model.Name}}
 func (s *{{.Model.Name}}Service) GetByID(ctx context.Context, id uint) (*model.{{.Model.Name}}, error) {
-	{{.Model.Name | ToLowerCamelCase}}, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		return nil, Err{{.Model.Name}}NotFound
-	}
-	return {{.Model.Name | ToLowerCamelCase}}, nil
+    {{- if .GetCacheEnabled}}
+    cacheKey := fmt.Sprintf("{{.Model.Name | ToLowerCamelCase}}:%d", id)
+    _, cache, _, _, _, _ := commonadapter.Abilities()
+    if v, err := cache.Get(cacheKey); err == nil {
+        if {{.Model.Name | ToLowerCamelCase}}, ok := v.(*model.{{.Model.Name}}); ok {
+            return {{.Model.Name | ToLowerCamelCase}}, nil
+        }
+    }
+    {{- end}}
+    {{.Model.Name | ToLowerCamelCase}}, err := s.repo.GetByID(ctx, id)
+    if err != nil {
+        return nil, Err{{.Model.Name}}NotFound
+    }
+    {{- if .GetCacheEnabled}}
+    _, cache, _, _, _, _ := commonadapter.Abilities()
+    _ = cache.Set(cacheKey, {{.Model.Name | ToLowerCamelCase}}, {{if .GetCacheTTL}}{{.GetCacheTTL}}{{else}}600{{end}})
+    {{- end}}
+    return {{.Model.Name | ToLowerCamelCase}}, nil
 }
 
 // Update 更新 {{.Model.Name}}
 func (s *{{.Model.Name}}Service) Update(ctx context.Context, {{.Model.Name | ToLowerCamelCase}} *model.{{.Model.Name}}) error {
-	if err := s.repo.Update(ctx, {{.Model.Name | ToLowerCamelCase}}); err != nil {
-		return fmt.Errorf("更新{{.Model.Name}}失败: %w", err)
-	}
-	return nil
+    if err := s.repo.Update(ctx, {{.Model.Name | ToLowerCamelCase}}); err != nil {
+        return fmt.Errorf("更新{{.Model.Name}}失败: %w", err)
+    }
+    _, cache, _, _, _, _ := commonadapter.Abilities()
+    _ = cache.Delete(fmt.Sprintf("{{.Model.Name | ToLowerCamelCase}}:%d", {{.Model.Name | ToLowerCamelCase}}.ID))
+    _ = cache.DeleteByPattern("{{.Model.Name | ToLowerCamelCase}}:list:*")
+    return nil
 }
 
 // Delete 删除 {{.Model.Name}}
 func (s *{{.Model.Name}}Service) Delete(ctx context.Context, id uint) error {
-	if err := s.repo.Delete(ctx, id); err != nil {
-		return fmt.Errorf("删除{{.Model.Name}}失败: %w", err)
-	}
-	return nil
+    if err := s.repo.Delete(ctx, id); err != nil {
+        return fmt.Errorf("删除{{.Model.Name}}失败: %w", err)
+    }
+    _, cache, _, _, _, _ := commonadapter.Abilities()
+    _ = cache.Delete(fmt.Sprintf("{{.Model.Name | ToLowerCamelCase}}:%d", id))
+    _ = cache.DeleteByPattern("{{.Model.Name | ToLowerCamelCase}}:list:*")
+    return nil
 }
 
 // List 获取 {{.Model.Name}} 列表（分页）
@@ -170,19 +192,42 @@ func (s *{{.Model.Name}}Service) List(ctx context.Context, page, pageSize int) (
 		pageSize = 20
 	}
 
-	return s.repo.List(ctx, page, pageSize)
+    {{- if .ListCacheEnabled}}
+    cacheKey := fmt.Sprintf("{{.Model.Name | ToLowerCamelCase}}:list:%d:%d", page, pageSize)
+    _, cache, _, _, _, _ := commonadapter.Abilities()
+    if v, err := cache.Get(cacheKey); err == nil {
+        if res, ok := v.([]*model.{{.Model.Name}}); ok {
+            // 无 total 时仍需要查询 count，这里简化：回退到查询路径
+            return res, int64(len(res)), nil
+        }
+    }
+    {{- end}}
+    res, total, err := s.repo.List(ctx, page, pageSize)
+    if err != nil {
+        return nil, 0, err
+    }
+    {{- if .ListCacheEnabled}}
+    _, cache, _, _, _, _ := commonadapter.Abilities()
+    _ = cache.Set(cacheKey, res, {{if .ListCacheTTL}}{{.ListCacheTTL}}{{else}}300{{end}})
+    {{- end}}
+    return res, total, nil
 }
 `
 
 const controllerTemplate = `package controller
 
 import (
-	"net/http"
-	"strconv"
+    "net/http"
+    "strconv"
 
-	"github.com/gin-gonic/gin"
-	"github.com/{{.Spec.Project.Module}}/internal/service"
-	"github.com/{{.Spec.Project.Module}}/pkg/httpx/response"
+    "github.com/gin-gonic/gin"
+    "{{.Spec.Project.Module}}/internal/model"
+    "{{.Spec.Project.Module}}/internal/service"
+    "{{.Spec.Project.Module}}/pkg/httpx/response"
+    "github.com/yourname/go-start/pkg/commonadapter"
+    {{- if or .CreateValidator .UpdateValidator}}
+    "{{.Spec.Project.Module}}/internal/validator"
+    {{- end}}
 )
 
 // {{.Model.Name}}Controller {{.Model.Name}}控制器
@@ -213,22 +258,64 @@ func New{{.Model.Name}}Controller(service *service.{{.Model.Name}}Service) *{{.M
 // @Success 200 {object} response.Response
 // @Router /api/v1/{{.Model.Name | ToLowerCamelCase}}s [post]
 func (c *{{.Model.Name}}Controller) Create(ctx *gin.Context) {
-	var {{.Model.Name | ToLowerCamelCase}} model.{{.Model.Name}}
-	if err := ctx.ShouldBindJSON(&{{.Model.Name | ToLowerCamelCase}}); err != nil {
-		response.Error(ctx, http.StatusBadRequest, "参数错误: "+err.Error())
-		return
-	}
+    token := ctx.GetHeader("Authorization")
+    if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") { token = token[7:] }
+    auth, _, audit, idemp, _, _ := commonadapter.Abilities()
+    var userID string
+    {{- if .CreateAuth}}
+    {
+        var err error
+        userID, err = auth.VerifyToken(token)
+        if err != nil { response.Error(ctx, http.StatusUnauthorized, "未授权"); return }
+        {{- if .CreatePerm}}
+        if err := auth.RequirePermission(userID, "{{.CreatePerm}}"); err != nil { response.Error(ctx, http.StatusForbidden, "权限不足"); return }
+        {{- end}}
+    }
+    {{- end}}
+    ik := ctx.GetHeader("Idempotency-Key")
+    if ik != "" {
+        ok, err := idemp.CheckAndSet(ik, 600)
+        if err != nil { response.Error(ctx, http.StatusInternalServerError, "幂等校验失败"); return }
+        if !ok { response.Error(ctx, http.StatusConflict, "重复请求"); return }
+    }
+    {{- if .CreateValidator}}
+    var req validator.{{.CreateValidator}}
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        response.Error(ctx, http.StatusBadRequest, "参数错误: "+err.Error())
+        return
+    }
+    if err := req.Validate(); err != nil {
+        response.Error(ctx, http.StatusBadRequest, err.Error())
+        return
+    }
+    {{- end}}
 
-	if err := c.service.Create(ctx, &{{.Model.Name | ToLowerCamelCase}}); err != nil {
-		response.Error(ctx, http.StatusInternalServerError, err.Error())
-		return
-	}
+    var {{.Model.Name | ToLowerCamelCase}} model.{{.Model.Name}}
+    if err := ctx.ShouldBindJSON(&{{.Model.Name | ToLowerCamelCase}}); err != nil {
+        response.Error(ctx, http.StatusBadRequest, "参数错误: "+err.Error())
+        return
+    }
 
-	response.Success(ctx, gin.H{"id": {{.Model.Name | ToLowerCamelCase}}.ID})
+    if err := c.service.Create(ctx, &{{.Model.Name | ToLowerCamelCase}}); err != nil {
+        response.Error(ctx, http.StatusInternalServerError, err.Error())
+        return
+    }
+    _ = audit.Record(userID, "{{.Model.Name}}", "create", "success", "")
+    response.Success(ctx, gin.H{"id": {{.Model.Name | ToLowerCamelCase}}.ID})
 }
 
 // GetByID 获取 {{.Model.Name}} 详情
 func (c *{{.Model.Name}}Controller) GetByID(ctx *gin.Context) {
+    {{- if .GetAuth}}
+    token := ctx.GetHeader("Authorization")
+    if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") { token = token[7:] }
+    auth, _, _, _, _, _ := commonadapter.Abilities()
+    userID, err := auth.VerifyToken(token)
+    if err != nil { response.Error(ctx, http.StatusUnauthorized, "未授权"); return }
+    {{- if .GetPerm}}
+    if err := auth.RequirePermission(userID, "{{.GetPerm}}"); err != nil { response.Error(ctx, http.StatusForbidden, "权限不足"); return }
+    {{- end}}
+    {{- end}}
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -247,6 +334,20 @@ func (c *{{.Model.Name}}Controller) GetByID(ctx *gin.Context) {
 
 // Update 更新 {{.Model.Name}}
 func (c *{{.Model.Name}}Controller) Update(ctx *gin.Context) {
+    token := ctx.GetHeader("Authorization")
+    if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") { token = token[7:] }
+    auth, _, audit, _, _, _ := commonadapter.Abilities()
+    var userID string
+    {{- if .UpdateAuth}}
+    {
+        var err error
+        userID, err = auth.VerifyToken(token)
+        if err != nil { response.Error(ctx, http.StatusUnauthorized, "未授权"); return }
+        {{- if .UpdatePerm}}
+        if err := auth.RequirePermission(userID, "{{.UpdatePerm}}"); err != nil { response.Error(ctx, http.StatusForbidden, "权限不足"); return }
+        {{- end}}
+    }
+    {{- end}}
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -254,23 +355,49 @@ func (c *{{.Model.Name}}Controller) Update(ctx *gin.Context) {
 		return
 	}
 
-	var {{.Model.Name | ToLowerCamelCase}} model.{{.Model.Name}}
-	if err := ctx.ShouldBindJSON(&{{.Model.Name | ToLowerCamelCase}}); err != nil {
-		response.Error(ctx, http.StatusBadRequest, "参数错误: "+err.Error())
-		return
-	}
+    {{- if .UpdateValidator}}
+    var req validator.{{.UpdateValidator}}
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        response.Error(ctx, http.StatusBadRequest, "参数错误: "+err.Error())
+        return
+    }
+    if err := req.Validate(); err != nil {
+        response.Error(ctx, http.StatusBadRequest, err.Error())
+        return
+    }
+    {{- end}}
+
+    var {{.Model.Name | ToLowerCamelCase}} model.{{.Model.Name}}
+    if err := ctx.ShouldBindJSON(&{{.Model.Name | ToLowerCamelCase}}); err != nil {
+        response.Error(ctx, http.StatusBadRequest, "参数错误: "+err.Error())
+        return
+    }
 
 	{{.Model.Name | ToLowerCamelCase}}.ID = uint(id)
-	if err := c.service.Update(ctx, &{{.Model.Name | ToLowerCamelCase}}); err != nil {
-		response.Error(ctx, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	response.Success(ctx, nil)
+    if err := c.service.Update(ctx, &{{.Model.Name | ToLowerCamelCase}}); err != nil {
+        response.Error(ctx, http.StatusInternalServerError, err.Error())
+        return
+    }
+    _ = audit.Record(userID, "{{.Model.Name}}", "update", "success", "")
+    response.Success(ctx, nil)
 }
 
 // Delete 删除 {{.Model.Name}}
 func (c *{{.Model.Name}}Controller) Delete(ctx *gin.Context) {
+    token := ctx.GetHeader("Authorization")
+    if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") { token = token[7:] }
+    auth, _, audit, _, _, _ := commonadapter.Abilities()
+    var userID string
+    {{- if .DeleteAuth}}
+    {
+        var err error
+        userID, err = auth.VerifyToken(token)
+        if err != nil { response.Error(ctx, http.StatusUnauthorized, "未授权"); return }
+        {{- if .DeletePerm}}
+        if err := auth.RequirePermission(userID, "{{.DeletePerm}}"); err != nil { response.Error(ctx, http.StatusForbidden, "权限不足"); return }
+        {{- end}}
+    }
+    {{- end}}
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -278,16 +405,26 @@ func (c *{{.Model.Name}}Controller) Delete(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.service.Delete(ctx, uint(id)); err != nil {
-		response.Error(ctx, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	response.Success(ctx, nil)
+    if err := c.service.Delete(ctx, uint(id)); err != nil {
+        response.Error(ctx, http.StatusInternalServerError, err.Error())
+        return
+    }
+    _ = audit.Record(userID, "{{.Model.Name}}", "delete", "success", "")
+    response.Success(ctx, nil)
 }
 
 // List 获取 {{.Model.Name}} 列表
 func (c *{{.Model.Name}}Controller) List(ctx *gin.Context) {
+    {{- if .ListAuth}}
+    token := ctx.GetHeader("Authorization")
+    if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") { token = token[7:] }
+    auth, _, _, _, _, _ := commonadapter.Abilities()
+    userID, err := auth.VerifyToken(token)
+    if err != nil { response.Error(ctx, http.StatusUnauthorized, "未授权"); return }
+    {{- if .ListPerm}}
+    if err := auth.RequirePermission(userID, "{{.ListPerm}}"); err != nil { response.Error(ctx, http.StatusForbidden, "权限不足"); return }
+    {{- end}}
+    {{- end}}
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(ctx.DefaultQuery("page_size", "20"))
 
@@ -309,8 +446,8 @@ func (c *{{.Model.Name}}Controller) List(ctx *gin.Context) {
 const routesTemplate = `package routes
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/{{.Spec.Project.Module}}/internal/controller"
+    "github.com/gin-gonic/gin"
+    "{{.Spec.Project.Module}}/internal/controller"
 )
 
 // RegisterAutoRoutes 自动注册所有路由
@@ -320,7 +457,7 @@ func RegisterAutoRoutes(r *gin.Engine, controllers *controller.Controllers) {
 	v1 := r.Group("/api/v1")
 	{
 		{{- range $model := .Spec.Models}}
-		{{ToLowerCamelCase $model.Name}} := v1.Group("/{{ToLowerCamelCase $model.Name}}s")
+		{{ToLowerCamelCase $model.Name}} := v1.Group("/{{pluralize (ToLowerCamelCase $model.Name)}}")
 		{
 			{{ToLowerCamelCase $model.Name}}.POST("", controllers.{{$model.Name}}.Create)
 			{{ToLowerCamelCase $model.Name}}.GET("", controllers.{{$model.Name}}.List)
@@ -333,15 +470,42 @@ func RegisterAutoRoutes(r *gin.Engine, controllers *controller.Controllers) {
 }
 `
 
+const validatorTemplate = `package validator
+
+import (
+    "fmt"
+    "github.com/go-playground/validator/v10"
+)
+
+// {{.Request.Name}} {{.Request.Comment}}
+// 使用 validator.v10 进行字段规则校验
+type {{.Request.Name}} struct {
+    {{- range $f := .Request.Fields}}
+    {{ToCamelCase $f.Name}} string ` + "`" + `validate:"{{$f.Rules}}"` + "`" + ` // {{$f.Comment}}
+    {{- end}}
+}
+
+// Validate 对 {{.Request.Name}} 进行规则校验
+// 返回错误以指示具体的规则失败信息
+func (r *{{.Request.Name}}) Validate() error {
+    v := validator.New()
+    if err := v.Struct(r); err != nil {
+        return fmt.Errorf("{{.Request.Name}} 校验失败: %w", err)
+    }
+    return nil
+}
+`
+
 // getBuiltinTemplate 获取内置模板内容
 func getBuiltinTemplate(name string) string {
-	templates := map[string]string{
+    templates := map[string]string{
 		"model.go.tmpl":      modelTemplate,
 		"repository.go.tmpl": repositoryTemplate,
 		"service.go.tmpl":    serviceTemplate,
-		"controller.go.tmpl": controllerTemplate,
-		"routes.go.tmpl":     routesTemplate,
-	}
+        "controller.go.tmpl": controllerTemplate,
+        "routes.go.tmpl":     routesTemplate,
+        "validator.go.tmpl":  validatorTemplate,
+    }
 
-	return templates[name]
+    return templates[name]
 }

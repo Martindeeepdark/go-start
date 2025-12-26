@@ -14,6 +14,10 @@ go-start.exe
 
 # Go workspace file
 go.work
+go.work.example
+
+# Temporary directories
+.trae/
 
 # IDEs
 .idea/

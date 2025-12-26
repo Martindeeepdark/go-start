@@ -1,11 +1,12 @@
 package spec
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
+    "fmt"
+    "os"
+    "path/filepath"
+    "strings"
 
-	"gopkg.in/yaml.v3"
+    "gopkg.in/yaml.v3"
 )
 
 // Spec represents the API specification
@@ -292,8 +293,16 @@ func (s *Spec) GetEndpointsByModel(modelName string) []APIEndpoint {
 
 // containsModelName checks if handler name contains model name
 func containsModelName(handler, modelName string) bool {
-	// Simple check: handler starts with model name or contains it
-	return len(handler) > len(modelName) &&
-		(handler[:len(modelName)] == modelName ||
-			handler[len(handler)-len(modelName):] == modelName)
+    h := strings.ToLower(handler)
+    m := strings.ToLower(modelName)
+    // basic contains
+    if strings.Contains(h, m) {
+        return true
+    }
+    // plural forms
+    plural := m + "s"
+    if strings.HasSuffix(m, "y") {
+        plural = m[:len(m)-1] + "ies"
+    }
+    return strings.Contains(h, plural)
 }

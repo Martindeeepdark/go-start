@@ -112,13 +112,35 @@ func (g *Generator) generateServices() error {
 		// Get endpoints for this model
 		endpoints := g.spec.GetEndpointsByModel(model.Name)
 
-		if err := g.generateFile("service.go.tmpl", outputPath, map[string]interface{}{
-			"Spec":      g.spec,
-			"Model":     model,
-			"Endpoints": endpoints,
-		}); err != nil {
-			return err
-		}
+        var getCacheEnabled bool
+        var listCacheEnabled bool
+        var getCacheTTL int
+        var listCacheTTL int
+        for _, ep := range endpoints {
+            if strings.EqualFold(ep.Method, "GET") {
+                if ep.Cache != nil && ep.Cache.Enabled {
+                    if strings.Contains(ep.Path, ":") {
+                        getCacheEnabled = true
+                        getCacheTTL = ep.Cache.TTL
+                    } else {
+                        listCacheEnabled = true
+                        listCacheTTL = ep.Cache.TTL
+                    }
+                }
+            }
+        }
+
+        if err := g.generateFile("service.go.tmpl", outputPath, map[string]interface{}{
+            "Spec":            g.spec,
+            "Model":           model,
+            "Endpoints":       endpoints,
+            "GetCacheEnabled": getCacheEnabled,
+            "ListCacheEnabled": listCacheEnabled,
+            "GetCacheTTL":     getCacheTTL,
+            "ListCacheTTL":    listCacheTTL,
+        }); err != nil {
+            return err
+        }
 
 		fmt.Printf("  ✓ %sService\n", model.Name)
 	}
@@ -133,16 +155,58 @@ func (g *Generator) generateControllers() error {
 	for _, model := range g.spec.Models {
 		outputPath := filepath.Join(g.outputDir, "internal/controller", strings.ToLower(model.Name)+".go")
 
-		// Get endpoints for this model
-		endpoints := g.spec.GetEndpointsByModel(model.Name)
+        // Get endpoints for this model
+        endpoints := g.spec.GetEndpointsByModel(model.Name)
 
-		if err := g.generateFile("controller.go.tmpl", outputPath, map[string]interface{}{
-			"Spec":      g.spec,
-			"Model":     model,
-			"Endpoints": endpoints,
-		}); err != nil {
-			return err
-		}
+        // Derive validator and auth/permission per operation from endpoints
+        var createValidator, updateValidator string
+        var createAuth, updateAuth, getAuth, deleteAuth, listAuth bool
+        var createPerm, updatePerm, getPerm, deletePerm, listPerm string
+        for _, ep := range endpoints {
+            m := strings.ToUpper(ep.Method)
+            switch m {
+            case "POST":
+                if ep.Validate != "" && createValidator == "" { createValidator = ep.Validate }
+                if ep.Auth { createAuth = true }
+                if ep.Permission != "" && createPerm == "" { createPerm = ep.Permission }
+            case "PUT":
+                if ep.Validate != "" && updateValidator == "" { updateValidator = ep.Validate }
+                if ep.Auth { updateAuth = true }
+                if ep.Permission != "" && updatePerm == "" { updatePerm = ep.Permission }
+            case "GET":
+                // distinguish list vs get by path heuristic
+                if strings.Contains(ep.Path, ":") { // detail
+                    if ep.Auth { getAuth = true }
+                    if ep.Permission != "" && getPerm == "" { getPerm = ep.Permission }
+                } else { // list
+                    if ep.Auth { listAuth = true }
+                    if ep.Permission != "" && listPerm == "" { listPerm = ep.Permission }
+                }
+            case "DELETE":
+                if ep.Auth { deleteAuth = true }
+                if ep.Permission != "" && deletePerm == "" { deletePerm = ep.Permission }
+            }
+        }
+
+        if err := g.generateFile("controller.go.tmpl", outputPath, map[string]interface{}{
+            "Spec":            g.spec,
+            "Model":           model,
+            "Endpoints":       endpoints,
+            "CreateValidator": createValidator,
+            "UpdateValidator": updateValidator,
+            "CreateAuth":      createAuth,
+            "UpdateAuth":      updateAuth,
+            "GetAuth":         getAuth,
+            "DeleteAuth":      deleteAuth,
+            "ListAuth":        listAuth,
+            "CreatePerm":      createPerm,
+            "UpdatePerm":      updatePerm,
+            "GetPerm":         getPerm,
+            "DeletePerm":      deletePerm,
+            "ListPerm":        listPerm,
+        }); err != nil {
+            return err
+        }
 
 		fmt.Printf("  ✓ %sController\n", model.Name)
 	}
@@ -201,14 +265,16 @@ func (g *Generator) generateFile(templateName, outputPath string, data interface
 	}
 
 	// Parse template with custom functions
-	funcMap := template.FuncMap{
-		"ToCamelCase":      toCamelCase,
-		"ToLowerCamelCase": toLowerCamelCase,
-		"pluralize":        pluralize,
-		"getGoType":        getGoType,
-		"getGormTag":       getGormTag,
-		"getJSONTag":       getJSONTag,
-	}
+    funcMap := template.FuncMap{
+        "ToCamelCase":      toCamelCase,
+        "ToLowerCamelCase": toLowerCamelCase,
+        "pluralize":        pluralize,
+        "getGoType":        getGoType,
+        "getGoType2":       getGoType2,
+        "getGormTag":       getGormTag,
+        "getJSONTag":       getJSONTag,
+        "getIndexTags":     getIndexTags,
+    }
 
 	tmpl, err := template.New(templateName).Funcs(funcMap).Parse(templateContent)
 	if err != nil {
@@ -277,6 +343,29 @@ func getGoType(fieldType string) string {
 	return "string" // default
 }
 
+func getGoType2(field FieldDef) string {
+    base := getGoType(field.Type)
+    if field.NotNull {
+        return base
+    }
+    switch base {
+    case "uint":
+        return "*uint"
+    case "int":
+        return "*int"
+    case "string":
+        return "*string"
+    case "bool":
+        return "*bool"
+    case "float64":
+        return "*float64"
+    case "time.Time":
+        return "*time.Time"
+    default:
+        return "*" + base
+    }
+}
+
 func getGormTag(field FieldDef) string {
 	var tags []string
 
@@ -325,6 +414,26 @@ func getGormTag(field FieldDef) string {
 	}
 
 	return strings.Join(tags, ";")
+}
+
+func getIndexTags(fieldName string, indexes []IndexDef) string {
+    var parts []string
+    for _, idx := range indexes {
+        for _, f := range idx.Fields {
+            if f == fieldName {
+                if idx.Unique {
+                    parts = append(parts, "uniqueIndex:"+idx.Name)
+                } else {
+                    parts = append(parts, "index:"+idx.Name)
+                }
+                break
+            }
+        }
+    }
+    if len(parts) == 0 {
+        return ""
+    }
+    return ";" + strings.Join(parts, ";")
 }
 
 func getJSONTag(fieldName string, customJSON string) string {

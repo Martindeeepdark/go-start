@@ -46,7 +46,7 @@ func New() *Wizard {
 
 // Run starts the interactive wizard
 func (w *Wizard) Run() (*ProjectConfig, error) {
-	fmt.Println(`
+    fmt.Print(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║   🚀 欢迎使用 go-start 交互式项目创建向导                  ║
