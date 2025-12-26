@@ -12,7 +12,7 @@
 2. **DDD（领域驱动设计）**
    - 复杂业务逻辑
    - 适合大型项目
-   - 分层：Domain → Application → Infrastructure → Interface
+   - 分层：Interface → Application→  Domain  → Infrastructure 
 
 ### 部署方式（不作为模板区分）
 
