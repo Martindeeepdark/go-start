@@ -32,20 +32,33 @@ go-start create
 # 交互式选择表
 go-start gen db --dsn="root:pass@tcp(localhost:3306)/mydb" --interactive
 
-# 指定表名
-go-start gen db --dsn="..." --tables=users,articles
+# 指定表名（MVC 架构）
+go-start gen db --dsn="..." --tables=users,articles --arch=mvc
+
+# 使用 DDD 架构
+go-start gen db --dsn="..." --tables=users --arch=ddd
 
 # 通配符匹配
 go-start gen db --dsn="..." --tables="user*"
 ```
 
 **生成内容：**
+
+#### MVC 架构（默认）
 - ✅ GORM Gen Model 和 Query API
 - ✅ Repository 层（基于 GORM Gen API，带中文注释）
 - ✅ 基于索引自动生成查询方法
 - ✅ Service 层（业务逻辑 + 缓存支持）
 - ✅ Controller 层（RESTful API）
 - ✅ 路由自动注册
+
+#### DDD 架构
+- ✅ Domain 层（实体、仓储接口、领域服务）
+- ✅ Application 层（应用服务、用例编排）
+- ✅ Infrastructure 层（仓储实现、持久化）
+- ✅ Interface 层（HTTP 控制器、路由注册）
+
+详见：[DDD 架构指南](./docs/DDD_GUIDE.md)
 
 ### 3. Spec-Kit 规范驱动开发
 
@@ -214,14 +227,15 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*model.U
 - [x] Controller 层生成（RESTful API）
 - [x] 路由自动注册
 - [x] 完整使用示例和文档
+- [x] DDD 架构支持
+- [x] MVC/DDD 架构选择
 
 ### 🚧 进行中
 - [ ] 优化生成代码的模块路径配置
 - [ ] 添加更多单元测试
 
 ### 📋 待实现
-- [ ] DDD 架构模板
-- [ ] 认证系统
+- [ ] 认证系统（JWT）
 - [ ] Swagger 文档生成
 - [ ] 插件系统
 
@@ -252,6 +266,7 @@ go run cmd/server/main.go
 ## 文档
 
 - [完整使用示例](./docs/COMPLETE_EXAMPLE.md) - 端到端的使用教程
+- [DDD 架构指南](./docs/DDD_GUIDE.md) - DDD 架构使用指南
 - [GORM 技术选型](./docs/GORM_TECH_CHOICE.md) - 为什么选择 GORM Gen
 - [GORM Gen 使用指南](./docs/GORM_GEN_GUIDE.md) - 详细使用教程
 - [项目状态](./docs/PROJECT_STATUS.md) - 开发进度和规划
