@@ -316,17 +316,14 @@ func (s *{{.ModelName}}Service) deleteListCache(ctx context.Context) error {
 {{end}}
 `
 
-	// 创建模板
-	t, err := template.New("service").Parse(tmpl)
-	if err != nil {
-		return fmt.Errorf("解析模板失败: %w", err)
-	}
-
-	// 添加辅助函数
+	// 创建模板并添加辅助函数
 	funcMap := template.FuncMap{
 		"ToLowerCamelCase": toLowerCamelCase,
 	}
-	t = t.Funcs(funcMap)
+	t, err := template.New("service").Funcs(funcMap).Parse(tmpl)
+	if err != nil {
+		return fmt.Errorf("解析模板失败: %w", err)
+	}
 
 	// 创建文件
 	f, err := os.Create(outputPath)
