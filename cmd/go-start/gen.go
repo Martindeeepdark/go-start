@@ -123,6 +123,13 @@ func runGenDb(cmd *cobra.Command, args []string) error {
 	} else if genTables != "" {
 		// 命令行指定
 		tables = parseTables(genTables)
+
+		// 🔥 新增：展开通配符
+		expandedTables, err := expandTableWildcards(genDSN, tables)
+		if err != nil {
+			return fmt.Errorf("展开表名通配符失败: %w", err)
+		}
+		tables = expandedTables
 	} else {
 		// 未指定，提示用户
 		return fmt.Errorf("请使用以下方式之一指定要生成的表：\n" +
@@ -361,4 +368,83 @@ func parseInt(s string) int {
 func loadTablesFromConfig(filename string) ([]string, error) {
 	// TODO: 实现配置文件解析
 	return []string{}, fmt.Errorf("配置文件功能尚未实现")
+}
+
+// expandTableWildcards 展开表名通配符
+// 支持：
+//   *       - 所有表
+//   user*   - 以 user 开头的表
+//   *log    - 以 log 结尾的表
+//   *task*  - 包含 task 的表
+func expandTableWildcards(dsn string, tables []string) ([]string, error) {
+	// 先获取所有表
+	allTables, err := gen.ListTables(dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	var allTableNames []string
+	for _, t := range allTables {
+		allTableNames = append(allTableNames, t.Name)
+	}
+
+	var result []string
+	usedWildcard := false
+
+	for _, table := range tables {
+		// 检查是否包含通配符
+		if !strings.Contains(table, "*") {
+			// 没有通配符，直接添加
+			result = append(result, table)
+			continue
+		}
+
+		usedWildcard = true
+
+		// 转换通配符为正则表达式
+		// *       -> .*
+		// user*   -> ^user.*
+		// *log    -> ^.*log$
+		// *task*  -> ^.*task.*$
+		pattern := strings.ReplaceAll(table, "*", ".*")
+		if !strings.HasPrefix(table, "*") {
+			pattern = "^" + pattern
+		}
+		if !strings.HasSuffix(table, "*") {
+			pattern = pattern + "$"
+		}
+
+		// 编译正则表达式
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("无效的通配符模式 '%s': %w", table, err)
+		}
+
+		// 匹配表名
+		for _, tableName := range allTableNames {
+			if re.MatchString(tableName) {
+				result = append(result, tableName)
+			}
+		}
+	}
+
+	// 如果使用了通配符，去重
+	if usedWildcard {
+		result = uniqueStrings(result)
+	}
+
+	return result, nil
+}
+
+// uniqueStrings 去重
+func uniqueStrings(slice []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+	for _, s := range slice {
+		if !seen[s] {
+			seen[s] = true
+			result = append(result, s)
+		}
+	}
+	return result
 }

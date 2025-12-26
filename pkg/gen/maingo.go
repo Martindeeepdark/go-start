@@ -42,6 +42,11 @@ func (g *DatabaseGenerator) GenerateMainGo() error {
 
 	fmt.Println("     ✓ cmd/server/main.go 创建成功")
 
+	// 生成 application 包
+	if err := g.GenerateApplicationPackage(modulePath, modelNames); err != nil {
+		return err
+	}
+
 	// 生成配置文件
 	if err := g.GenerateConfigYAML(); err != nil {
 		return err
@@ -61,121 +66,119 @@ func (g *DatabaseGenerator) renderMainGoTemplate(outputPath, modulePath string, 
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
+	"runtime/debug"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	"{{.ModulePath}}/internal/controller"
-	"{{.ModulePath}}/internal/repository"
+	"{{.ModulePath}}/internal/application"
 	"{{.ModulePath}}/internal/routes"
-	"{{.ModulePath}}/internal/service"
-	"{{.ModulePath}}/pkg/cache"
 	"go.uber.org/zap"
 )
 
+// @title           {{.ModuleName}} API
+// @version         1.0
+// @description     {{.Description}}
 func main() {
-	// 初始化日志
-	zapLogger, err := zap.NewProduction()
+	ctx := context.Background()
+
+	// Please do not change the order of the function calls below
+	setCrashOutput()
+
+	if err := loadEnv(); err != nil {
+		panic("loadEnv failed, err=" + err.Error())
+	}
+
+	setLogLevel()
+
+	if err := application.Init(ctx); err != nil {
+		panic("InitializeInfra failed, err=" + err.Error())
+	}
+
+	startHttpServer()
+}
+
+// setCrashOutput 设置崩溃输出
+func setCrashOutput() {
+	crashFile, err := os.Create("crash.log")
 	if err != nil {
-		log.Fatalf("Failed to create logger: %v", err)
+		log.Printf("创建崩溃日志文件失败: %v", err)
+		return
 	}
-	defer zapLogger.Sync()
+	debug.SetCrashOutput(crashFile, debug.CrashOptions{})
+}
 
-	zapLogger.Info("Starting {{.ModulePath}}...")
-
-	// 从环境变量读取数据库配置
-	dsn := os.Getenv("DATABASE_DSN")
-	if dsn == "" {
-		// 默认值
-		dsn = "root:password@tcp(localhost:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-	}
-
-	// 初始化数据库
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
-	if err != nil {
-		zapLogger.Fatal("Failed to connect database", zap.Error(err))
+// loadEnv 加载环境变量
+func loadEnv() error {
+	appEnv := os.Getenv("APP_ENV")
+	fileName := ".env"
+	if appEnv != "" {
+		fileName = ".env." + appEnv
 	}
 
-	sqlDB, _ := db.DB()
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	log.Printf("加载环境变量文件: %s", fileName)
 
-	defer sqlDB.Close()
-	zapLogger.Info("Database connected successfully")
+	// 这里使用简单的环境变量读取
+	// 实际项目中可以使用 godotenv.Load(fileName)
+	// 但为了减少依赖，我们直接依赖 os.Getenv
 
-	// 初始化 Redis (可选)
-	cacheClient := cache.New()
+	return nil
+}
 
-	// 初始化 Repository 层
-	{{range .ModelInfos}}
-	{{.LowerCamelCase}}Repo := repository.New{{.Name}}Repository(db)
-	{{end}}
+// setLogLevel 设置日志级别
+func setLogLevel() {
+	level := getEnv("LOG_LEVEL", "info")
+	log.Printf("日志级别: %s", level)
 
-	// 初始化 Service 层
-	{{range .ModelInfos}}
-	{{.LowerCamelCase}}Service := service.New{{.Name}}Service({{.LowerCamelCase}}Repo, cacheClient)
-	{{end}}
+	// 根据环境变量设置日志级别
+	// 实际项目中可以集成 zap 等日志库
+	_ = level // 占位符
+}
 
-	// 初始化 Controller 层
-	controllers := &routes.Controllers{
-		{{range .ModelInfos}}
-		{{.Name}}: controller.New{{.Name}}Controller({{.LowerCamelCase}}Service),
-		{{end}}
+// getEnv 获取环境变量，支持默认值
+func getEnv(key, defaultValue string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return defaultValue
 	}
+	return v
+}
 
-	// 初始化路由
+// startHttpServer 启动 HTTP 服务器
+func startHttpServer() {
+	addr := getEnv("SERVER_ADDR", ":8080")
+	readTimeout := getDurationEnv("READ_TIMEOUT", 15*time.Second)
+	writeTimeout := getDurationEnv("WRITE_TIMEOUT", 15*time.Second)
+	idleTimeout := getDurationEnv("IDLE_TIMEOUT", 60*time.Second)
+
+	log.Printf("启动 HTTP 服务器: %s", addr)
+
+	// 创建 Gin engine
 	r := gin.Default()
 
-	// 注册自动生成的路由
-	routes.RegisterAutoRoutes(r, controllers)
+	// 注册路由
+	routes.RegisterRoutes(r)
 
-	// 健康检查
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-			"time":   time.Now().Format(time.RFC3339),
-		})
-	})
+	// TODO: 配置服务器超时、TLS 等
+	// 这里简化处理，实际项目中可以使用类似 server.Start(r) 的方式
 
-	// 启动 HTTP 服务器
-	srv := &http.Server{
-		Addr:    ":8080",
-		Handler: r,
+	// 启动服务器
+	if err := r.Run(addr); err != nil {
+		panic("启动 HTTP 服务器失败: " + err.Error())
 	}
+}
 
-	// 在 goroutine 中启动服务器
-	go func() {
-		zapLogger.Info("Server is running on :8080")
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			zapLogger.Fatal("Failed to start server", zap.Error(err))
-		}
-	}()
-
-	// 优雅关闭
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	zapLogger.Info("Shutting down server...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
-		zapLogger.Error("Server forced to shutdown", zap.Error(err))
+// getDurationEnv 获取时间间隔类型的环境变量
+func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
+	v := os.Getenv(key)
+	if v == "" {
+		return defaultValue
 	}
-
-	zapLogger.Info("Server exited")
+	if d, err := time.ParseDuration(v); err == nil {
+		return d
+	}
+	return defaultValue
 }
 `
 

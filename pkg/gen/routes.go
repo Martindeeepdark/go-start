@@ -39,43 +39,47 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"{{.ModulePath}}/internal/application"
 	"{{.ModulePath}}/internal/controller"
 )
 
-// Controllers 控制器集合
-type Controllers struct {
-	{{range .TableNames}}
-	{{.Name}} *controller.{{.Name}}Controller
-	{{end}}
-}
+// RegisterRoutes 注册所有路由
+//
+// 此函数在 main.go 的 startHttpServer() 中调用
+// 使用 application 包中已初始化的 Controller
+func RegisterRoutes(r *gin.Engine) {
+	// 健康检查
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "ok",
+		})
+	})
 
-// RegisterAutoRoutes 自动注册所有路由
-//
-// 此文件由 go-start 自动生成，请勿手动修改
-// 如需自定义路由，请在其他文件中手动注册
-//
-// 路由说明：
-//   每个表自动生成 RESTful API
-//   - POST   创建
-//   - GET    列表
-//   - GET    详情
-//   - PUT    更新
-//   - DELETE 删除
-func RegisterAutoRoutes(r *gin.Engine, controllers *Controllers) {
+	// API v1 路由组
 	v1 := r.Group("/api/v1")
 	{
 		{{range .TableNames}}
-		{{ToLowerCamelCase .Name}}Routes := v1.Group("/{{ToLowerCamelCase .Name}}s")
-		{
-			{{ToLowerCamelCase .Name}}Routes.POST("", controllers.{{.Name}}.Create)
-			{{ToLowerCamelCase .Name}}Routes.GET("", controllers.{{.Name}}.List)
-			{{ToLowerCamelCase .Name}}Routes.GET("/:id", controllers.{{.Name}}.GetByID)
-			{{ToLowerCamelCase .Name}}Routes.PUT("/:id", controllers.{{.Name}}.Update)
-			{{ToLowerCamelCase .Name}}Routes.DELETE("/:id", controllers.{{.Name}}.Delete)
-		}
+		register{{.Name}}Routes(v1)
 		{{end}}
 	}
 }
+
+{{range .TableNames}}
+// register{{.Name}}Routes 注册 {{.Name}} 相关路由
+func register{{.Name}}Routes(router gin.IRouter) {
+	// 从 application 包获取已初始化的 Service
+	ctrl := controller.New{{.Name}}Controller(application.{{ToLowerCamelCase .Name}}Service)
+
+	group := router.Group("/{{ToLowerCamelCase .Name}}s")
+	{
+		group.POST("", ctrl.Create)
+		group.GET("", ctrl.List)
+		group.GET("/:id", ctrl.GetByID)
+		group.PUT("/:id", ctrl.Update)
+		group.DELETE("/:id", ctrl.Delete)
+	}
+}
+{{end}}
 `
 
 	// 创建模板并添加辅助函数

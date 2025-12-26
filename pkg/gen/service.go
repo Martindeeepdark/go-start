@@ -79,8 +79,9 @@ var (
 //   - 所有方法接受 context.Context，支持超时和追踪
 //   - 返回明确的 error，方便上层处理
 //   - 缓存失效策略：写操作后删除缓存，读操作时缓存未命中则查询数据库并写入缓存
+//   - 依赖接口而非具体实现，支持依赖注入和 Mock 测试
 type {{.ModelName}}Service struct {
-	repo  *repository.{{.ModelName}}Repository
+	repo  repository.{{.ModelName}}Repo  // 🔥 依赖接口而非具体实现
 	db    *gorm.DB
 	{{if .WithCache}}
 	cache *cache.Cache
@@ -89,7 +90,7 @@ type {{.ModelName}}Service struct {
 
 // New{{.ModelName}}Service 创建 {{.ModelName}} 服务实例
 func New{{.ModelName}}Service(
-	repo *repository.{{.ModelName}}Repository,
+	repo repository.{{.ModelName}}Repo,  // 🔥 接受接口参数
 	db *gorm.DB,
 	{{if .WithCache}}
 	cache *cache.Cache,
