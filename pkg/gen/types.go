@@ -3,7 +3,13 @@ package gen
 import (
 	"database/sql"
 	"fmt"
+	"path/filepath"
 	"strings"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/gen"
+	"gorm.io/gorm"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -59,8 +65,152 @@ func NewDatabaseGenerator(config Config) *DatabaseGenerator {
 
 // Generate 生成代码
 func (g *DatabaseGenerator) Generate() error {
-	// TODO: 实现代码生成
+	fmt.Println("🔧 正在初始化 GORM Gen...")
+
+	// 1. 连接数据库
+	db, err := connectGORMDB(g.config.DSN)
+	if err != nil {
+		return fmt.Errorf("连接数据库失败: %w", err)
+	}
+
+	// 2. 创建 GORM Gen 生成器
+	generator := gen.NewGenerator(gen.Config{
+		OutPath:       filepath.Join(g.config.Output, "dal/query"),
+		Mode:          gen.WithoutContext | gen.WithDefaultQuery | gen.WithQueryInterface,
+		FieldNullable: true,
+		FieldSignable: false,
+		// FieldWithIndexTag: false,
+		// FieldWithTypeTag: true,
+	})
+
+	generator.UseDB(db)
+
+	// 3. 为每个表生成模型
+	fmt.Println("📦 正在读取表结构...")
+	var models []interface{}
+
+	for _, tableName := range g.config.Tables {
+		fmt.Printf("  📋 处理表: %s\n", tableName)
+
+		// 使用 GORM Gen 自动生成模型
+		model := generator.GenerateModel(tableName)
+		models = append(models, model)
+	}
+
+	// 4. 执行 GORM Gen 生成
+	fmt.Println("🚀 正在生成 GORM 查询代码...")
+	generator.ApplyBasic(models...)
+	generator.Execute()
+
+	fmt.Println("✅ GORM Gen 代码生成完成！")
+	fmt.Printf("   生成位置: %s\n", filepath.Join(g.config.Output, "dal/query"))
+
+	// 5. 生成 Repository 层
+	fmt.Println("\n📦 正在生成 Repository 层...")
+	if err := g.generateRepositoryLayer(); err != nil {
+		return fmt.Errorf("生成 Repository 层失败: %w", err)
+	}
+
 	return nil
+}
+
+// connectGORMDB 使用 GORM 连接数据库
+func connectGORMDB(dsn string) (*gorm.DB, error) {
+	var dialector gorm.Dialector
+
+	// 根据DSN判断数据库类型
+	if strings.Contains(dsn, "@tcp(") || strings.Contains(dsn, "@unix(") {
+		// MySQL
+		dialector = mysql.Open(dsn)
+	} else if strings.HasPrefix(dsn, "host=") || strings.HasPrefix(dsn, "postgres://") {
+		// PostgreSQL
+		dialector = postgres.Open(dsn)
+	} else {
+		return nil, fmt.Errorf("不支持的数据库类型，DSN 格式无法识别")
+	}
+
+	db, err := gorm.Open(dialector, &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	// 测试连接
+	if err := sqlDB.Ping(); err != nil {
+		return nil, fmt.Errorf("数据库连接失败: %w", err)
+	}
+
+	return db, nil
+}
+
+// generateRepositoryLayer 生成 Repository 层
+func (g *DatabaseGenerator) generateRepositoryLayer() error {
+	// TODO: 获取模块路径和索引信息
+	// 这里简化处理，实际应该从配置或读取生成的代码获取
+
+	for _, tableName := range g.config.Tables {
+		// 简单的表名转模型名
+		modelName := toModelName(tableName)
+
+		// 获取表的索引信息
+		schema, err := GetTableSchema(g.config.DSN, tableName)
+		if err != nil {
+			fmt.Printf("  ⚠️  无法获取 %s 的索引信息，跳过\n", tableName)
+			continue
+		}
+
+		// 提取索引字段
+		var indexFields []string
+		for _, idx := range schema.Indexes {
+			if !idx.Primary && len(idx.Columns) == 1 {
+				// 只处理单列非主键索引
+				indexFields = append(indexFields, toCamelCase(idx.Columns[0]))
+			}
+		}
+
+		// 配置 Repository 生成
+		config := RepositoryConfig{
+			TableName:   tableName,
+			ModelName:   modelName,
+			PackageName: "repository",
+			ModulePath:  "github.com/yourname/project", // TODO: 从配置读取
+			Indexes:     indexFields,
+		}
+
+		if err := g.GenerateRepository(TableInfo{Name: tableName}, config); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// toModelName 表名转模型名
+func toModelName(tableName string) string {
+	// users -> Users
+	// user_profiles -> UserProfile
+	parts := strings.Split(tableName, "_")
+	for i, part := range parts {
+		if i > 0 || len(part) > 0 {
+			parts[i] = strings.ToUpper(part[:1]) + part[1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// toCamelCase 转换为驼峰命名
+func toCamelCase(s string) string {
+	parts := strings.Split(s, "_")
+	for i, part := range parts {
+		if len(part) > 0 {
+			parts[i] = strings.ToUpper(part[:1]) + part[1:]
+		}
+	}
+	return strings.Join(parts, "")
 }
 
 // SQLGenerator SQL文件代码生成器
