@@ -70,7 +70,16 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	// Generate project based on architecture
 	switch archType {
 	case "mvc":
-		if err := generateMVCProject(projectDir, projectName, module); err != nil {
+		if err := generateMVCProjectWithOptions(projectDir, &wizard.ProjectConfig{
+			ProjectName:  projectName,
+			Module:       module,
+			Description:  "",
+			Database:     "mysql",
+			WithAuth:     true,
+			WithSwagger:  true,
+			WithRedis:    true,
+			ServerPort:   8080,
+		}); err != nil {
 			return err
 		}
 	default:
@@ -485,6 +494,9 @@ require (
 		modContent += "\tgithub.com/swaggo/gin-swagger v1.6.0\n"
 		modContent += "\tgithub.com/swaggo/swag v1.16.3\n"
 	}
+
+	// Close the require block
+	modContent += ")\n"
 
 	return os.WriteFile(filepath.Join(projectDir, "go.mod"), []byte(modContent), 0644)
 }

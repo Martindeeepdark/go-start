@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/viper"
+	"github.com/{{.Module}}/pkg/cache"
+	"github.com/{{.Module}}/pkg/database"
 )
 
 // Config represents the application configuration

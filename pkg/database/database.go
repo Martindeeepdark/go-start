@@ -8,9 +8,21 @@ import (
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-
-	"github.com/yourname/go-start/pkg/database/defs"
 )
+
+// TxOptions represents transaction options
+type TxOptions struct {
+	Isolation int
+	ReadOnly  bool
+}
+
+// Stats represents database statistics
+type Stats struct {
+	MaxOpenConnections int
+	OpenConnections    int
+	InUse              int
+	Idle               int
+}
 
 // Config represents database configuration
 type Config struct {
@@ -157,7 +169,7 @@ func (d *DB) Close() error {
 }
 
 // BeginTx starts a transaction
-func (d *DB) BeginTx(ctx context.Context, opts *defs.TxOptions) (*Transaction, error) {
+func (d *DB) BeginTx(ctx context.Context, opts *TxOptions) (*Transaction, error) {
 	var sqlOpts *sql.TxOptions
 	if opts != nil {
 		sqlOpts = &sql.TxOptions{
@@ -204,14 +216,14 @@ func (d *DB) Ping(ctx context.Context) error {
 }
 
 // Stats returns database statistics
-func (d *DB) Stats() defs.Stats {
+func (d *DB) Stats() Stats {
 	sqlDB, err := d.db.DB()
 	if err != nil {
-		return defs.Stats{}
+		return Stats{}
 	}
 
 	stats := sqlDB.Stats()
-	return defs.Stats{
+	return Stats{
 		MaxOpenConnections: stats.MaxOpenConnections,
 		OpenConnections:    stats.OpenConnections,
 		InUse:              stats.InUse,
