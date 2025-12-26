@@ -77,7 +77,7 @@ func (g *DatabaseGenerator) Generate() error {
 
 	// 2. 创建 GORM Gen 生成器
 	generator := gen.NewGenerator(gen.Config{
-		OutPath:       filepath.Join(g.config.Output, "dal/query"),
+		OutPath:       filepath.Join(g.config.Output, "internal/dal/query"),
 		Mode:          gen.WithoutContext | gen.WithDefaultQuery | gen.WithQueryInterface,
 		FieldNullable: true,
 		FieldSignable: false,
@@ -105,7 +105,7 @@ func (g *DatabaseGenerator) Generate() error {
 	generator.Execute()
 
 	fmt.Println("✅ GORM Gen 代码生成完成！")
-	fmt.Printf("   生成位置: %s\n", filepath.Join(g.config.Output, "dal/query"))
+	fmt.Printf("   生成位置: %s\n", filepath.Join(g.config.Output, "internal/dal/query"))
 
 	// 5. 生成 Repository 层
 	fmt.Println("\n📦 正在生成 Repository 层...")
@@ -131,13 +131,19 @@ func (g *DatabaseGenerator) Generate() error {
 		return fmt.Errorf("生成 go.mod 失败: %w", err)
 	}
 
-	// 9. 生成 main.go 和配置文件
+	// 9. 生成支持包
+	fmt.Println("\n📦 正在生成支持包...")
+	if err := g.GenerateSupportPackages(); err != nil {
+		return fmt.Errorf("生成支持包失败: %w", err)
+	}
+
+	// 10. 生成 main.go 和配置文件
 	fmt.Println("\n📦 正在生成 main.go...")
 	if err := g.GenerateMainGo(); err != nil {
 		return fmt.Errorf("生成 main.go 失败: %w", err)
 	}
 
-	// 10. 生成路由注册
+	// 11. 生成路由注册
 	fmt.Println("\n📦 正在生成路由注册...")
 	if err := g.GenerateRoutes(getTablesFromNames(g.config.Tables), getModulePath(g.config.Module)); err != nil {
 		return fmt.Errorf("生成路由失败: %w", err)
