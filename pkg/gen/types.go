@@ -99,6 +99,14 @@ func (g *DatabaseGenerator) Generate() error {
 	for _, tableName := range g.config.Tables {
 		fmt.Printf("  📋 处理表: %s\n", tableName)
 
+		// 🔧 检查表是否存在
+		if !g.tableExists(db, tableName) {
+			return fmt.Errorf("❌ 表 '%s' 不存在\n\n💡 帮助:\n%s\n📋 数据库中的表:\n%s",
+				tableName,
+				g.getHint(),
+				g.listTables(db))
+		}
+
 		// 使用 GORM Gen 自动生成模型
 		model := generator.GenerateModel(tableName)
 		models = append(models, model)
@@ -199,6 +207,37 @@ func connectGORMDB(dsn string) (*gorm.DB, error) {
 	}
 
 	return db, nil
+}
+
+// tableExists 检查表是否存在
+func (g *DatabaseGenerator) tableExists(db *gorm.DB, tableName string) bool {
+	var count int64
+	db.Raw("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = ?", tableName).Scan(&count)
+	return count > 0
+}
+
+// getHint 获取提示信息
+func (g *DatabaseGenerator) getHint() string {
+	return `• 检查表名是否拼写正确
+• 使用 --interactive 交互式选择表
+• 使用 --tables="*" 生成所有表
+• 使用 --tables="prefix*" 生成指定前缀的表`
+}
+
+// listTables 列出数据库中的所有表
+func (g *DatabaseGenerator) listTables(db *gorm.DB) string {
+	var tables []string
+	db.Raw("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name").Scan(&tables)
+
+	if len(tables) == 0 {
+		return "  (空)"
+	}
+
+	var result string
+	for _, table := range tables {
+		result += fmt.Sprintf("  • %s\n", table)
+	}
+	return result
 }
 
 // generateRepositoryLayer 生成 Repository 层
