@@ -17,6 +17,7 @@ var (
 	genSQLFile     string
 	genInteractive bool
 	genConfig      string
+	genArchitecture string  // 架构类型：mvc 或 ddd
 )
 
 func newGenCmd() *cobra.Command {
@@ -71,6 +72,7 @@ func newGenDbCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&genInteractive, "interactive", false, "交互式选择表（推荐）")
 	cmd.Flags().StringVar(&genConfig, "config", "", "从配置文件读取表列表")
 	cmd.Flags().StringVar(&genOutput, "output", "./internal", "输出目录")
+	cmd.Flags().StringVar(&genArchitecture, "arch", "mvc", "架构类型 (mvc 或 ddd)")
 
 	return cmd
 }
@@ -129,17 +131,30 @@ func runGenDb(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("\n🔌 正在连接数据库...\n")
 	fmt.Printf("📊 DSN: %s\n", maskDSN(genDSN))
-	fmt.Printf("📋 将生成 %d 张表: %s\n\n", len(tables), strings.Join(tables, ", "))
+	fmt.Printf("📋 将生成 %d 张表: %s\n", len(tables), strings.Join(tables, ", "))
+	fmt.Printf("🏗️  架构模式: %s\n\n", strings.ToUpper(genArchitecture))
 
-	// 创建生成器
-	generator := gen.NewDatabaseGenerator(gen.Config{
-		DSN:    genDSN,
-		Tables: tables,
-		Output: genOutput,
-	})
+	// 根据架构类型创建生成器
+	if genArchitecture == "ddd" {
+		// DDD 架构
+		generator := gen.NewDDDGenerator(gen.Config{
+			DSN:    genDSN,
+			Tables: tables,
+			Output: genOutput,
+		})
+		err = generator.Generate()
+	} else {
+		// MVC 架构（默认）
+		generator := gen.NewDatabaseGenerator(gen.Config{
+			DSN:    genDSN,
+			Tables: tables,
+			Output: genOutput,
+		})
+		err = generator.Generate()
+	}
 
 	// 生成代码
-	if err := generator.Generate(); err != nil {
+	if err != nil {
 		return fmt.Errorf("生成代码失败: %w", err)
 	}
 
