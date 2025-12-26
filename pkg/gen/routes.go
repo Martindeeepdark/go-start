@@ -55,23 +55,23 @@ type Controllers struct {
 // 如需自定义路由，请在其他文件中手动注册
 //
 // 路由说明：
-//   - 每个表自动生成 RESTful API
-//   - POST   /api/v1/{{ToLowerCamelCase .Name}}s       - 创建
-//   - GET    /api/v1/{{ToLowerCamelCase .Name}}s       - 列表
-//   - GET    /api/v1/{{ToLowerCamelCase .Name}}s/:id   - 详情
-//   - PUT    /api/v1/{{ToLowerCamelCase .Name}}s/:id   - 更新
-//   - DELETE /api/v1/{{ToLowerCamelCase .Name}}s/:id   - 删除
+//   每个表自动生成 RESTful API
+//   - POST   创建
+//   - GET    列表
+//   - GET    详情
+//   - PUT    更新
+//   - DELETE 删除
 func RegisterAutoRoutes(r *gin.Engine, controllers *Controllers) {
 	v1 := r.Group("/api/v1")
 	{
 		{{range .TableNames}}
-		{{ToLowerCamelCase .Name}} := v1.Group("/{{ToLowerCamelCase .Name}}s")
+		{{ToLowerCamelCase .Name}}Routes := v1.Group("/{{ToLowerCamelCase .Name}}s")
 		{
-			{{ToLowerCamelCase .Name}}.POST("", controllers.{{.Name}}.Create)
-			{{ToLowerCamelCase .Name}}.GET("", controllers.{{.Name}}.List)
-			{{ToLowerCamelCase .Name}}.GET("/:id", controllers.{{.Name}}.GetByID)
-			{{ToLowerCamelCase .Name}}.PUT("/:id", controllers.{{.Name}}.Update)
-			{{ToLowerCamelCase .Name}}.DELETE("/:id", controllers.{{.Name}}.Delete)
+			{{ToLowerCamelCase .Name}}Routes.POST("", controllers.{{.Name}}.Create)
+			{{ToLowerCamelCase .Name}}Routes.GET("", controllers.{{.Name}}.List)
+			{{ToLowerCamelCase .Name}}Routes.GET("/:id", controllers.{{.Name}}.GetByID)
+			{{ToLowerCamelCase .Name}}Routes.PUT("/:id", controllers.{{.Name}}.Update)
+			{{ToLowerCamelCase .Name}}Routes.DELETE("/:id", controllers.{{.Name}}.Delete)
 		}
 		{{end}}
 	}
