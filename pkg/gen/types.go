@@ -125,7 +125,13 @@ func (g *DatabaseGenerator) Generate() error {
 		return fmt.Errorf("生成 Controller 层失败: %w", err)
 	}
 
-	// 8. 生成路由注册
+	// 8. 生成 go.mod
+	fmt.Println("\n📦 正在生成 go.mod...")
+	if err := g.GenerateGoMod(); err != nil {
+		return fmt.Errorf("生成 go.mod 失败: %w", err)
+	}
+
+	// 9. 生成路由注册
 	fmt.Println("\n📦 正在生成路由注册...")
 	if err := g.GenerateRoutes(getTablesFromNames(g.config.Tables), getModulePath(g.config.Module)); err != nil {
 		return fmt.Errorf("生成路由失败: %w", err)
