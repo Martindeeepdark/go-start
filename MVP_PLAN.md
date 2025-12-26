@@ -40,7 +40,7 @@
 
 ### 需求 1: 添加 --module 参数支持 🔥🔥🔥
 
-**状态**: 🔧 进行中 (50% 完成)
+**状态**: ✅ 完成 (2025-12-26)
 **问题**: 生成的代码使用硬编码的模块路径 `github.com/yourname/project`
 **影响**: 生成的代码无法直接编译，需要手动修改所有 import 路径
 
@@ -49,15 +49,20 @@
 - ✅ 添加 `--module` 参数到 gen db 命令
 - ✅ 在 `gen.Config` 中添加 `Module` 字段
 - ✅ 在 `gen/types.go` 中添加 `getModulePath()` 辅助方法
-- ✅ Repository 层使用 `getModulePath()`
+- ✅ Repository 层使用 `getModulePath()` (types.go:216)
+- ✅ Service 层使用 `getModulePath()` (types.go:242)
+- ✅ Controller 层使用 `getModulePath()` (types.go:265)
+- ✅ Routes 层使用 `getModulePath()` (types.go:130)
+- ✅ DDD 架构使用 `getModulePath()` (ddd.go:488, 634, 762)
+- ✅ 端到端测试通过
+- ✅ 向后兼容验证通过
 
-**待完成的修改**:
-- ❌ Service 层需要使用 `getModulePath()`
-- ❌ Controller 层需要使用 `getModulePath()`
-- ❌ Routes 层需要使用 `getModulePath()`
-- ❌ 需要验证编译和测试
+**验收标准**:
+- [x] 支持通过 --module 参数指定
+- [x] 生成的代码使用正确的 import 路径
+- [x] 向后兼容（不指定时使用默认值）
 
-**预计剩余时间**: 2 小时
+**Commit**: `69b966f`
 
 ---
 
@@ -69,7 +74,7 @@
 |-----|------|--------|----------|
 | P0-1 Repository 去重 | ✅ 完成 | P0 | - |
 | P0-2 路由完整性 | ✅ 完成 | P0 | - |
-| P1-3 模块路径参数 | 🔧 进行中 | P0 | 2h |
+| P1-3 模块路径参数 | ✅ 完成 | P0 | - |
 | P1-4 自动生成 go.mod | ⏳ 待开始 | P0 | 2h |
 | P1-5 可运行的 main.go | ⏳ 待开始 | P0 | 2h |
 | 快速开始文档 | ⏳ 待开始 | P0 | 2h |
