@@ -21,6 +21,10 @@ import (
 	"github.com/{{.Module}}/pkg/httpx/response"
 	"github.com/{{.Module}}/pkg/httpx/router"
 	"go.uber.org/zap"
+	{{if .WithSwagger}}
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	{{end}}
 )
 
 // @title           {{.ProjectName}} API
@@ -51,6 +55,7 @@ func main() {
 	defer db.Close()
 	logger.Info("Database connected successfully")
 
+	{{if .WithRedis}}
 	// Initialize Redis
 	cacheClient, err := cache.New(cfg.Redis)
 	if err != nil {
@@ -58,6 +63,9 @@ func main() {
 	}
 	defer cacheClient.Close()
 	logger.Info("Redis connected successfully")
+	{{else}}
+	var cacheClient *cache.Cache
+	{{end}}
 
 	// Initialize repository layer
 	repo := repository.New(db)
@@ -112,6 +120,11 @@ func registerRoutes(r *router.Router, ctrl *controller.Controller) {
 	r.GET("/health", func(c *gin.Context) {
 		response.Success(c, gin.H{"status": "ok"})
 	})
+
+	{{if .WithSwagger}}
+	// Swagger documentation
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	{{end}}
 
 	// API v1
 	v1 := r.Group("/api/v1")

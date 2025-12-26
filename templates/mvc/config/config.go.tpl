@@ -4,15 +4,19 @@ import (
 	"fmt"
 
 	"github.com/spf13/viper"
-	"github.com/{{.Module}}/pkg/cache"
 	"github.com/{{.Module}}/pkg/database"
+	{{if .WithRedis}}
+	"github.com/{{.Module}}/pkg/cache"
+	{{end}}
 )
 
 // Config represents the application configuration
 type Config struct {
-	Server   ServerConfig   `yaml:"server" mapstructure:"server"`
-	Database database.Config `yaml:"database" mapstructure:"database"`
-	Redis    cache.Config    `yaml:"redis" mapstructure:"redis"`
+	Server   ServerConfig    `yaml:"server" mapstructure:"server"`
+	Database database.Config  `yaml:"database" mapstructure:"database"`
+	{{if .WithRedis}}
+	Redis    cache.Config     `yaml:"redis" mapstructure:"redis"`
+	{{end}}
 }
 
 // ServerConfig represents server configuration
@@ -29,8 +33,8 @@ func Load() (*Config, error) {
 	viper.AddConfigPath("$HOME/.{{.ProjectName}}/")
 
 	// Set defaults
-	viper.SetDefault("server.port", 8080)
-	viper.SetDefault("database.driver", "mysql")
+	viper.SetDefault("server.port", {{.ServerPort}})
+	viper.SetDefault("database.driver", "{{.Database}}")
 	viper.SetDefault("database.host", "localhost")
 	viper.SetDefault("database.port", 3306)
 	viper.SetDefault("database.charset", "utf8mb4")
@@ -39,6 +43,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("database.max_idle_conns", 10)
 	viper.SetDefault("database.max_open_conns", 100)
 	viper.SetDefault("database.conn_max_lifetime", 3600)
+	{{if .WithRedis}}
 	viper.SetDefault("redis.host", "localhost")
 	viper.SetDefault("redis.port", 6379)
 	viper.SetDefault("redis.db", 0)
@@ -48,6 +53,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("redis.read_timeout", 3)
 	viper.SetDefault("redis.write_timeout", 3)
 	viper.SetDefault("redis.pool_timeout", 4)
+	{{end}}
 
 	// Read environment variables
 	viper.AutomaticEnv()
