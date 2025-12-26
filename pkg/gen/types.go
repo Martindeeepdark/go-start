@@ -50,6 +50,7 @@ type Config struct {
 	Tables  []string // 要生成的表名
 	Output  string   // 输出目录
 	SQLFile string   // SQL 文件路径（用于 SQL 生成器）
+	Module  string   // Go 模块路径
 }
 
 // DatabaseGenerator 数据库代码生成器
@@ -126,7 +127,7 @@ func (g *DatabaseGenerator) Generate() error {
 
 	// 8. 生成路由注册
 	fmt.Println("\n📦 正在生成路由注册...")
-	if err := g.GenerateRoutes(getTablesFromNames(g.config.Tables), "github.com/yourname/project"); err != nil {
+	if err := g.GenerateRoutes(getTablesFromNames(g.config.Tables), getModulePath(g.config.Module)); err != nil {
 		return fmt.Errorf("生成路由失败: %w", err)
 	}
 
@@ -212,7 +213,7 @@ func (g *DatabaseGenerator) generateRepositoryLayer() error {
 			TableName:   tableName,
 			ModelName:   modelName,
 			PackageName: "repository",
-			ModulePath:  "github.com/yourname/project", // TODO: 从配置读取
+			ModulePath:  getModulePath(g.config.Module),
 			Indexes:     indexFields,
 		}
 
@@ -238,7 +239,7 @@ func (g *DatabaseGenerator) generateServiceLayer() error {
 			TableName:   tableName,
 			ModelName:   modelName,
 			PackageName: "service",
-			ModulePath:  "github.com/yourname/project", // TODO: 从配置读取
+			ModulePath:  getModulePath(g.config.Module),
 			WithCache:   withCache,
 		}
 
@@ -261,7 +262,7 @@ func (g *DatabaseGenerator) generateControllerLayer() error {
 			TableName:   tableName,
 			ModelName:   modelName,
 			PackageName: "controller",
-			ModulePath:  "github.com/yourname/project", // TODO: 从配置读取
+			ModulePath:  getModulePath(g.config.Module),
 		}
 
 		if err := g.GenerateController(TableInfo{Name: tableName}, config); err != nil {
@@ -270,6 +271,14 @@ func (g *DatabaseGenerator) generateControllerLayer() error {
 	}
 
 	return nil
+}
+
+// getModulePath 获取模块路径，如果为空则返回默认值
+func getModulePath(modulePath string) string {
+	if modulePath == "" {
+		return "github.com/yourname/project"
+	}
+	return modulePath
 }
 
 // toModelName 表名转模型名

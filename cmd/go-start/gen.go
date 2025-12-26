@@ -18,6 +18,7 @@ var (
 	genInteractive bool
 	genConfig      string
 	genArchitecture string  // 架构类型：mvc 或 ddd
+	genModule      string   // Go 模块路径
 )
 
 func newGenCmd() *cobra.Command {
@@ -73,6 +74,7 @@ func newGenDbCmd() *cobra.Command {
 	cmd.Flags().StringVar(&genConfig, "config", "", "从配置文件读取表列表")
 	cmd.Flags().StringVar(&genOutput, "output", "./internal", "输出目录")
 	cmd.Flags().StringVar(&genArchitecture, "arch", "mvc", "架构类型 (mvc 或 ddd)")
+	cmd.Flags().StringVar(&genModule, "module", "", "Go 模块路径 (如: github.com/user/my-api)")
 
 	return cmd
 }
@@ -141,6 +143,7 @@ func runGenDb(cmd *cobra.Command, args []string) error {
 			DSN:    genDSN,
 			Tables: tables,
 			Output: genOutput,
+			Module: genModule,
 		})
 		err = generator.Generate()
 	} else {
@@ -149,6 +152,7 @@ func runGenDb(cmd *cobra.Command, args []string) error {
 			DSN:    genDSN,
 			Tables: tables,
 			Output: genOutput,
+			Module: genModule,
 		})
 		err = generator.Generate()
 	}

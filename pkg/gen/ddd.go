@@ -485,7 +485,7 @@ type Update{{.ModelName}}Command struct {
 	data := map[string]interface{}{
 		"TableName":  tableName,
 		"ModelName":  modelName,
-		"ModulePath": "github.com/yourname/project", // TODO: 从配置读取
+		"ModulePath": getModulePath(g.config.Module),
 	}
 
 	return t.Execute(f, data)
@@ -631,7 +631,7 @@ func (r *{{.ModelName}}RepositoryImpl) Delete(ctx context.Context, id uint) erro
 	data := map[string]interface{}{
 		"TableName":  tableName,
 		"ModelName":  modelName,
-		"ModulePath": "github.com/yourname/project", // TODO: 从配置读取
+		"ModulePath": getModulePath(g.config.Module),
 	}
 
 	return t.Execute(f, data)
@@ -759,7 +759,7 @@ func New{{.ModelName}}Controller(
 	data := map[string]interface{}{
 		"TableName":  tableName,
 		"ModelName":  modelName,
-		"ModulePath": "github.com/yourname/project", // TODO: 从配置读取
+		"ModulePath": getModulePath(g.config.Module),
 	}
 
 	return t.Execute(f, data)
