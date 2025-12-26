@@ -193,12 +193,17 @@ func (g *DatabaseGenerator) generateRepositoryLayer() error {
 			continue
 		}
 
-		// 提取索引字段
+		// 提取索引字段（去重）
+		indexFieldSet := make(map[string]bool)
 		var indexFields []string
 		for _, idx := range schema.Indexes {
 			if !idx.Primary && len(idx.Columns) == 1 {
 				// 只处理单列非主键索引
-				indexFields = append(indexFields, toCamelCase(idx.Columns[0]))
+				field := toCamelCase(idx.Columns[0])
+				if !indexFieldSet[field] {
+					indexFieldSet[field] = true
+					indexFields = append(indexFields, field)
+				}
 			}
 		}
 
