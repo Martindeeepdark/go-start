@@ -75,7 +75,7 @@
 | P0-1 Repository 去重 | ✅ 完成 | P0 | - |
 | P0-2 路由完整性 | ✅ 完成 | P0 | - |
 | P1-3 模块路径参数 | ✅ 完成 | P0 | - |
-| P1-4 自动生成 go.mod | ⏳ 待开始 | P0 | 2h |
+| P1-4 自动生成 go.mod | ✅ 完成 | P0 | - |
 | P1-5 可运行的 main.go | ⏳ 待开始 | P0 | 2h |
 | 快速开始文档 | ⏳ 待开始 | P0 | 2h |
 
@@ -93,8 +93,8 @@
 
 - [✅] gen db 命令可以生成完整的 CRUD 代码
 - [✅] 生成的代码包含 Model、Repository、Service、Controller、Routes
-- [ ] 支持自定义模块路径 (`--module` 参数)
-- [ ] 自动生成 go.mod
+- [✅] 支持自定义模块路径 (`--module` 参数)
+- [✅] 自动生成 go.mod
 - [ ] 生成可运行的 main.go
 - [ ] 支持 MySQL、PostgreSQL
 
