@@ -76,7 +76,7 @@
 | P0-2 路由完整性 | ✅ 完成 | P0 | - |
 | P1-3 模块路径参数 | ✅ 完成 | P0 | - |
 | P1-4 自动生成 go.mod | ✅ 完成 | P0 | - |
-| P1-5 可运行的 main.go | ⏳ 待开始 | P0 | 2h |
+| P1-5 可运行的 main.go | ✅ 完成 | P0 | - |
 | 快速开始文档 | ⏳ 待开始 | P0 | 2h |
 
 ### Sprint 2: 文档和演示 (2-3 天)
@@ -95,8 +95,8 @@
 - [✅] 生成的代码包含 Model、Repository、Service、Controller、Routes
 - [✅] 支持自定义模块路径 (`--module` 参数)
 - [✅] 自动生成 go.mod
-- [ ] 生成可运行的 main.go
-- [ ] 支持 MySQL、PostgreSQL
+- [✅] 生成可运行的 main.go
+- [ ] 支持 MySQL、PostgreSQL (已支持，需文档说明)
 
 ### 代码质量
 
