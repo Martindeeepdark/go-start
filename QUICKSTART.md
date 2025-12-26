@@ -2,11 +2,25 @@
 
 5 分钟从数据库表到完整的 RESTful API！
 
-## 前提条件
+## 📋 前置条件
 
-- Go 1.25+
-- MySQL 或 PostgreSQL
-- （可选）Redis
+在开始之前，请确保你已经安装了：
+
+- ✅ **Go 1.21 - 1.23**（推荐 1.21）
+  - ⚠️ **重要**：Go 1.24+ 与 golang.org/x/tools 存在已知兼容性问题
+  - 检查版本：`go version`
+- ✅ **MySQL 5.7+** 或 **PostgreSQL 12+**
+- ✅ **5 分钟时间** ⏰
+
+### 快速检查 Go 版本
+
+```bash
+go version
+# 输出示例：go version go1.21.0 darwin/amd64 ✅
+# 输出示例：go version go1.24.0 darwin/amd64 ❌
+```
+
+**如果版本不兼容**，请先安装正确的 Go 版本。详见 [Go 版本要求](docs/VERSION_REQUIREMENTS.md)。
 
 ## 第一步：构建工具
 
@@ -40,72 +54,90 @@ CREATE TABLE users (
 ./bin/go-start gen db \
   --dsn="root:password@tcp(localhost:3306)/testdb" \
   --tables=users \
-  --output=./myproject
+  --output=./myproject \
+  --module=github.com/username/myproject
+```
+
+**预期输出**：
+
+```
+🔌 正在连接数据库...
+📊 DSN: root:***@tcp(localhost:3306)/testdb
+📋 将生成 1 张表: users
+🏗️  架构模式: MVC
+
+✅ 代码生成完成！
+
+📦 已生成:
+  ✓ Model (数据模型)
+  ✓ Repository (数据访问层 + CRUD + 高级查询)
+  ✓ Service (业务逻辑层 + 缓存)
+  ✓ Controller (HTTP 处理器 + RESTful API)
+  ✓ Routes (路由注册)
+  ✓ pkg/cache (Redis 缓存封装)
+  ✓ pkg/httpx/response (统一响应格式)
 ```
 
 ## 第四步：查看生成的代码
 
 ```bash
-tree myproject/internal
+tree myproject -L 3
 ```
 
 你会看到：
 
 ```
-myproject/internal/
-├── dal/
-│   ├── query/
-│   │   ├── gen.go      # GORM Gen API
+myproject/
+├── cmd/
+│   └── server/
+│       └── main.go              # ✅ 应用入口（已生成）
+├── internal/
+│   ├── dal/                     # GORM Gen 查询 API
+│   │   ├── query/
+│   │   │   ├── gen.go
+│   │   │   └── users.go
+│   │   └── model/
+│   │       └── users.gen.go
+│   ├── model/
+│   │   └── common.go            # ✅ 通用模型（已生成）
+│   ├── repository/              # 数据访问层
 │   │   └── users.go
-│   └── model.go
-├── repository/
-│   └── user.go         # 数据访问层
-├── service/
-│   └── user.go         # 业务逻辑层（带缓存）
-├── controller/
-│   └── user.go         # RESTful API
-└── routes/
-    └── auto_routes.go  # 路由注册
+│   ├── service/                 # 业务逻辑层（带缓存）
+│   │   └── users.go
+│   ├── controller/              # RESTful API
+│   │   └── users.go
+│   └── routes/                  # 路由注册
+│       └── auto_routes.go
+├── pkg/
+│   ├── cache/
+│   │   └── cache.go             # ✅ Redis 缓存封装（已生成）
+│   └── httpx/
+│       └── response/
+│           └── response.go      # ✅ 统一响应格式（已生成）
+├── go.mod                       # ✅ Go 模块文件（已生成）
+└── config.yaml.example          # ✅ 配置文件示例（已生成）
 ```
 
-## 第五步：初始化项目
+## 第五步：运行服务
 
-创建 `main.go`:
+**✅ main.go 已经生成，无需手动编写！**
 
-```go
-package main
+```bash
+cd myproject
 
-import (
-    "gorm.io/driver/mysql"
-    "gorm.io/gorm"
-    "github.com/gin-gonic/gin"
-    "yourmodule/internal/dal/query"
-    "yourmodule/internal/repository"
-    "yourmodule/internal/service"
-    "yourmodule/internal/controller"
-    "yourmodule/internal/routes"
-)
+# 设置数据库环境变量
+export DATABASE_DSN="root:password@tcp(localhost:3306)/testdb"
 
-func main() {
-    // 1. 连接数据库
-    dsn := "root:password@tcp(localhost:3306)/testdb"
-    db, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+# 运行服务
+go run cmd/server/main.go
+```
 
-    // 2. 初始化依赖
-    userRepo := repository.NewUserRepository(db)
-    userService := service.NewUserService(userRepo, db, nil)
-    userController := controller.NewUserController(userService)
+**预期输出**：
 
-    // 3. 设置路由
-    r := gin.Default()
-    controllers := &routes.Controllers{
-        User: userController,
-    }
-    routes.RegisterAutoRoutes(r, controllers)
-
-    // 4. 启动服务
-    r.Run(":8080")
-}
+```
+2024/12/26 15:30:00 INFO Starting github.com/username/myproject...
+2024/12/26 15:30:01 INFO Database connected successfully
+2024/12/26 15:30:01 INFO [GIN-debug] Listening and serving HTTP on :8080
 ```
 
 ## 第六步：测试 API

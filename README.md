@@ -146,6 +146,23 @@ user, err := userService.GetByID(ctx, 1)
 
 ## 🛠️ 安装
 
+### 系统要求
+
+- ✅ **Go 1.21 - 1.23** （推荐 1.21）
+  - ⚠️ **注意**：Go 1.24+ 与 golang.org/x/tools 存在已知兼容性问题
+  - 详见：[Go 版本要求](QUICKSTART.md)
+- ✅ **MySQL 5.7+** 或 **PostgreSQL 12+**
+
+### 检查 Go 版本
+
+\`\`\`bash
+go version
+# 输出示例：go version go1.21.0 darwin/amd64 ✅
+# 输出示例：go version go1.24.0 darwin/amd64 ❌
+\`\`\`
+
+**如果版本不兼容**，请先安装正确的 Go 版本。
+
 ### 从源码安装
 
 ```bash

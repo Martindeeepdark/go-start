@@ -69,6 +69,11 @@ func NewDatabaseGenerator(config Config) *DatabaseGenerator {
 func (g *DatabaseGenerator) Generate() error {
 	fmt.Println("🔧 正在初始化 GORM Gen...")
 
+	// 0. 检查 Go 版本
+	if err := checkGoVersion(); err != nil {
+		return err
+	}
+
 	// 1. 连接数据库
 	db, err := connectGORMDB(g.config.DSN)
 	if err != nil {
