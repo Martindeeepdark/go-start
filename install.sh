@@ -5,6 +5,9 @@
 
 set -e
 
+# 避免Go toolchain问题
+export GOTOOLCHAIN=local
+
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║                                                           ║"
 echo "║   🚀 go-start 一键安装脚本                                ║"
@@ -23,6 +26,49 @@ if ! command -v go &> /dev/null; then
     exit 1
 fi
 
+# 测试 Go 是否正常工作
+if ! go version &> /dev/null; then
+    echo "⚠️  检测到 Go 但运行异常"
+    echo "   这可能是 Go toolchain 缓存问题"
+    echo ""
+    echo "📝 正在尝试从源码编译安装..."
+    echo ""
+
+    # 从源码编译
+    TMP_DIR=$(mktemp -d)
+    cd "$TMP_DIR"
+
+    if git clone https://github.com/Martindeeepdark/go-start.git 2>/dev/null; then
+        cd go-start
+        if go build -o go-start ./cmd/go-start 2>/dev/null; then
+            # 安装到系统路径
+            if [ -w /usr/local/bin ]; then
+                mv go-start /usr/local/bin/
+                GO_BIN="/usr/local/bin"
+            else
+                mkdir -p "$HOME/go/bin"
+                mv go-start "$HOME/go/bin/"
+                GO_BIN="$HOME/go/bin"
+            fi
+
+            echo "✅ 从源码编译成功!"
+            echo ""
+            cd "$TMP_DIR"
+            rm -rf go-start
+
+            # 继续配置 PATH
+            goto_check_path
+        fi
+    fi
+
+    echo "❌ 从源码编译也失败了"
+    echo ""
+    echo "请手动解决 Go 环境问题:"
+    echo "  1. 清理缓存: rm -rf ~/go/pkg/mod/golang.org/toolchain*"
+    echo "  2. 重装 Go: brew reinstall go"
+    exit 1
+fi
+
 echo "✅ 检测到 Go: $(go version)"
 echo ""
 
@@ -33,10 +79,29 @@ echo ""
 
 # 安装 go-start
 echo "⬇️  正在安装 go-start..."
-go install github.com/Martindeeepdark/go-start/cmd/go-start@latest
+echo ""
+
+if go install github.com/Martindeeepdark/go-start/cmd/go-start@latest 2>&1; then
+    echo "✅ 安装命令执行成功"
+else
+    echo "❌ 安装命令执行失败"
+    echo ""
+    echo "可能的原因:"
+    echo "  1. 网络问题,无法访问 GitHub"
+    echo "  2. Go 版本不兼容 (需要 Go 1.21+)"
+    echo "  3. Go module 缓存问题"
+    echo ""
+    echo "尝试手动安装:"
+    echo "  git clone https://github.com/Martindeeepdark/go-start.git"
+    echo "  cd go-start"
+    echo "  go build -o go-start ./cmd/go-start"
+    echo "  sudo mv go-start /usr/local/bin/"
+    exit 1
+fi
 
 if [ ! -f "$GO_BIN/go-start" ]; then
-    echo "❌ 安装失败"
+    echo "❌ 安装失败: 未找到可执行文件"
+    echo "   期望路径: $GO_BIN/go-start"
     exit 1
 fi
 
@@ -44,6 +109,7 @@ echo "✅ go-start 已安装到: $GO_BIN/go-start"
 echo ""
 
 # 检查是否在 PATH 中
+check_path:
 if echo $PATH | grep -q "$GO_BIN"; then
     echo "✅ $GO_BIN 已在 PATH 中"
     echo ""
