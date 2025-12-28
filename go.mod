@@ -1,4 +1,4 @@
-module github.com/yourname/go-start
+module github.com/Martindeeepdark/go-start
 
 go 1.25.4
 
