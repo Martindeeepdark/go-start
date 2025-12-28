@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/Martindeeepdark/go-start/pkg/check"
 )
 
 // Question represents a wizard question
@@ -46,6 +48,21 @@ func New() *Wizard {
 
 // Run starts the interactive wizard
 func (w *Wizard) Run() (*ProjectConfig, error) {
+	// 首先检查 Go 版本
+	goVersionInfo := check.CheckGoVersion()
+	check.PrintVersionInfo(goVersionInfo)
+
+	// 如果 Go 版本不兼容,给出明确提示并询问是否继续
+	if !goVersionInfo.Valid {
+		fmt.Println("⚠️  你的 Go 版本可能导致 go-start 无法正常工作")
+		fmt.Println("   是否仍然继续? (y/N)")
+		answer, _ := w.reader.ReadString('\n')
+		answer = strings.TrimSpace(strings.ToLower(answer))
+		if answer != "y" && answer != "yes" {
+			return nil, fmt.Errorf("用户取消操作")
+		}
+	}
+
 	fmt.Println(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
