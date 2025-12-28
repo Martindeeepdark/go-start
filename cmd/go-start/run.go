@@ -34,14 +34,21 @@ func runRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("not in a Go project directory")
 	}
 
+	// Ensure dependencies are downloaded
+	fmt.Println("📦 检查并下载依赖...")
+	if err := goModTidy(); err != nil {
+		return fmt.Errorf("go mod tidy 失败: %w", err)
+	}
+
 	// Check if air is installed for hot reload
 	if hasCommand("air") {
-		fmt.Println("Running with hot reload (air)...")
+		fmt.Println("🔥 使用热加载模式运行 (air)...")
 		return runWithAir()
 	}
 
 	// Run directly
-	fmt.Println("Running without hot reload (install air for hot reload support: go install github.com/cosmtrek/air@latest)")
+	fmt.Println("▶️  运行项目 (无热加载)")
+	fmt.Println("💡 提示: 安装 air 以支持热加载: go install github.com/cosmtrek/air@latest")
 	return runDirectly()
 }
 
@@ -95,4 +102,11 @@ func hasCommand(name string) bool {
 		return false
 	}
 	return cmd.ProcessState.Success()
+}
+
+func goModTidy() error {
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
