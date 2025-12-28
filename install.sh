@@ -101,7 +101,8 @@ echo ""
 echo "⬇️  正在安装 go-start..."
 echo ""
 
-if go install github.com/Martindeeepdark/go-start/cmd/go-start@latest 2>&1; then
+# 使用直连方式避免代理缓存问题
+if GOPROXY=direct go install github.com/Martindeeepdark/go-start/cmd/go-start@latest 2>&1; then
     echo "✅ 安装命令执行成功"
 else
     echo "❌ 安装命令执行失败"
