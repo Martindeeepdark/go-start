@@ -115,7 +115,7 @@ func (w *Wizard) Run() (*ProjectConfig, error) {
 
 // askProjectName asks for the project name
 func (w *Wizard) askProjectName(config *ProjectConfig) error {
-	fmt.Println("\n📦 步骤 1/9: 项目名称")
+	fmt.Println("\n📦 步骤 1/8: 项目名称")
 	fmt.Println("═════════════════════════════════════════")
 
 	for {

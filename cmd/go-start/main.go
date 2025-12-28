@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	// Version is set by build flags
-	Version = "dev"
+	// Version is set by build flags or git tag
+	// If not set, defaults to "dev"
+	Version = "v0.0.7"
 )
 
 func main() {
@@ -40,6 +41,7 @@ func newVersionCmd() *cobra.Command {
 		Short: "Print the version number",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("go-start version %s\n", Version)
+			fmt.Println("GitHub: https://github.com/Martindeeepdark/go-start")
 		},
 	}
 }
