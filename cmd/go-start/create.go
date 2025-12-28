@@ -13,7 +13,7 @@ import (
 	"github.com/Martindeeepdark/go-start/pkg/wizard"
 )
 
-//go:embed templates/*
+//go:embed templates
 var templatesFS embed.FS
 
 var (
@@ -311,8 +311,14 @@ func generateFileFromTemplate(projectDir, outputPath, templateName string, data 
 }
 
 func copyPkgFiles(projectDir string) error {
-	// Copy pkg directory
-	pkgSrc := filepath.Join(getRootDir(), "pkg")
+	// Find pkg directory from source
+	pkgSrc := findPkgDir()
+	if pkgSrc == "" {
+		// pkg not found, skip copy (user may not need it)
+		fmt.Println("  ⚠️  未找到 pkg 目录,跳过复制")
+		return nil
+	}
+
 	pkgDst := filepath.Join(projectDir, "pkg")
 
 	return filepath.Walk(pkgSrc, func(path string, info os.FileInfo, err error) error {
@@ -338,6 +344,38 @@ func copyPkgFiles(projectDir string) error {
 
 		return os.WriteFile(dstPath, data, info.Mode())
 	})
+}
+
+func findPkgDir() string {
+	// Try current directory first
+	if _, err := os.Stat("pkg"); err == nil {
+		abs, _ := filepath.Abs("pkg")
+		return abs
+	}
+
+	// Try parent directory (when running from cmd/go-start)
+	parentPkg := filepath.Join("..", "..", "pkg")
+	if _, err := os.Stat(parentPkg); err == nil {
+		abs, _ := filepath.Abs(parentPkg)
+		return abs
+	}
+
+	// Try binary's parent directories
+	execDir := filepath.Dir(os.Args[0])
+	paths := []string{
+		filepath.Join(execDir, "..", "pkg"),
+		filepath.Join(execDir, "..", "..", "pkg"),
+		filepath.Join(execDir, "..", "..", "..", "pkg"),
+	}
+
+	for _, path := range paths {
+		if _, err := os.Stat(path); err == nil {
+			abs, _ := filepath.Abs(path)
+			return abs
+		}
+	}
+
+	return ""
 }
 
 func isValidProjectName(name string) bool {
