@@ -40,21 +40,57 @@
 
 ## 🚀 快速开始
 
+### 一键安装 (推荐)
+
+```bash
+# macOS/Linux 一键安装脚本
+curl -sSL https://raw.githubusercontent.com/Martindeeepdark/go-start/main/install.sh | bash
+
+# 或者手动下载运行
+wget https://raw.githubusercontent.com/Martindeeepdark/go-start/main/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+安装完成后,就可以直接使用:
+
+```bash
+go-start create my-api          # 创建新项目
+go-start create --wizard       # 交互式创建
+go-start gen db --help          # 查看数据库生成命令
+```
+
+### 手动安装
+
+如果一键安装脚本无法使用,可以手动安装:
+
+```bash
+# 1. 安装
+go install github.com/Martindeeepdark/go-start/cmd/go-start@latest
+
+# 2. 添加到 PATH (只需一次)
+echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.zshrc
+source ~/.zshrc
+
+# 3. 验证
+go-start --version
+```
+
 ### 1 分钟体验
 
 ```bash
-# 安装
-go install github.com/Martindeeepdark/go-start@latest
+# 创建新项目
+go-start create my-api
 
-# 从数据库生成代码
-go-start gen db \
-  --dsn="root:pass@tcp(localhost:3306)/mydb" \
-  --tables=users,posts \
-  --module=github.com/username/my-api
+# 进入项目
+cd my-api
+
+# 配置数据库
+cp config.yaml.example config.yaml
+# 编辑 config.yaml 配置数据库连接
 
 # 运行
-cd my-api
-export DATABASE_DSN="root:pass@tcp(localhost:3306)/mydb"
+go mod tidy
 go run cmd/server/main.go
 
 # 测试 API
