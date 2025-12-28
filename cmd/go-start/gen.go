@@ -6,19 +6,19 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/Martindeeepdark/go-start/pkg/gen"
+	"github.com/spf13/cobra"
 )
 
 var (
-	genDSN         string
-	genTables      string
-	genOutput      string
-	genSQLFile     string
-	genInteractive bool
-	genConfig      string
-	genArchitecture string  // 架构类型：mvc 或 ddd
-	genModule      string   // Go 模块路径
+	genDSN          string
+	genTables       string
+	genOutput       string
+	genSQLFile      string
+	genInteractive  bool
+	genConfig       string
+	genArchitecture string // 架构类型：mvc 或 ddd
+	genModule       string // Go 模块路径
 )
 
 func newGenCmd() *cobra.Command {
