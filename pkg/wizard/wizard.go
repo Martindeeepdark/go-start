@@ -64,10 +64,8 @@ func (w *Wizard) Run() (*ProjectConfig, error) {
 		return nil, err
 	}
 
-	// 2. 模块名称
-	if err := w.askModuleName(config); err != nil {
-		return nil, err
-	}
+	// 2. 自动生成模块名称 (简化流程,减少新手认知负担)
+	config.Module = fmt.Sprintf("github.com/username/%s", config.ProjectName)
 
 	// 3. 项目描述
 	if err := w.askProjectDescription(config); err != nil {
@@ -161,7 +159,7 @@ func (w *Wizard) askModuleName(config *ProjectConfig) error {
 
 // askProjectDescription asks for project description
 func (w *Wizard) askProjectDescription(config *ProjectConfig) error {
-	fmt.Println("\n📝 步骤 3/9: 项目描述")
+	fmt.Println("\n📝 步骤 2/8: 项目描述")
 	fmt.Println("═════════════════════════════════════════")
 
 	answer, err := w.ask(Question{
@@ -180,7 +178,7 @@ func (w *Wizard) askProjectDescription(config *ProjectConfig) error {
 
 // askArchitecture asks for the architecture pattern
 func (w *Wizard) askArchitecture(config *ProjectConfig) error {
-	fmt.Println("\n🏗️  步骤 4/9: 架构模式")
+	fmt.Println("\n🏗️  步骤 3/8: 架构模式")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("选择你的项目架构模式：")
 	fmt.Println("  1️⃣  MVC (Model-View-Controller)")
@@ -216,7 +214,7 @@ func (w *Wizard) askArchitecture(config *ProjectConfig) error {
 
 // askDatabase asks for the database type
 func (w *Wizard) askDatabase(config *ProjectConfig) error {
-	fmt.Println("\n🗄️  步骤 5/9: 数据库类型")
+	fmt.Println("\n🗄️  步骤 4/8: 数据库类型")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("选择你使用的数据库：")
 	fmt.Println("  1️⃣  MySQL")
@@ -255,7 +253,7 @@ func (w *Wizard) askDatabase(config *ProjectConfig) error {
 
 // askRedis asks if Redis is needed
 func (w *Wizard) askRedis(config *ProjectConfig) error {
-	fmt.Println("\n⚡ 步骤 6/9: Redis 缓存")
+	fmt.Println("\n⚡ 步骤 5/8: Redis 缓存")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("Redis 是一个高性能的键值存储系统，可用于：")
 	fmt.Println("  • 缓存热点数据")
@@ -279,7 +277,7 @@ func (w *Wizard) askRedis(config *ProjectConfig) error {
 
 // askAuth asks if authentication is needed
 func (w *Wizard) askAuth(config *ProjectConfig) error {
-	fmt.Println("\n🔐 步骤 7/9: 用户认证系统")
+	fmt.Println("\n🔐 步骤 6/8: 用户认证系统")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("是否需要内置的用户认证系统？")
 	fmt.Println("  包含功能：")
@@ -304,7 +302,7 @@ func (w *Wizard) askAuth(config *ProjectConfig) error {
 
 // askSwagger asks if Swagger documentation is needed
 func (w *Wizard) askSwagger(config *ProjectConfig) error {
-	fmt.Println("\n📚 步骤 8/9: API 文档")
+	fmt.Println("\n📚 步骤 7/8: API 文档")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("是否需要自动生成 Swagger API 文档？")
 	fmt.Println("  优势：")
@@ -328,7 +326,7 @@ func (w *Wizard) askSwagger(config *ProjectConfig) error {
 
 // askServerPort asks for the server port
 func (w *Wizard) askServerPort(config *ProjectConfig) error {
-	fmt.Println("\n🔌 步骤 9/9: 服务器端口")
+	fmt.Println("\n🔌 步骤 8/8: 服务器端口")
 	fmt.Println("═════════════════════════════════════════")
 
 	answer, err := w.ask(Question{
