@@ -59,4 +59,9 @@ help:
 	@echo "  lint           - Run linter"
 	@echo "  deps           - Install dependencies"
 	@echo "  example        - Create an example project"
+	@echo "  doctor         - Diagnose local env and workspace"
 	@echo "  help           - Show this help message"
+
+doctor:
+	@$(MAKE) build >/dev/null
+	@./bin/go-start doctor

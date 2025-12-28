@@ -44,7 +44,7 @@
 
 ```bash
 # 安装
-go install github.com/yourname/go-start@latest
+go install github.com/Martindeeepdark/go-start@latest
 
 # 从数据库生成代码
 go-start gen db \
@@ -166,7 +166,7 @@ go version
 ### 从源码安装
 
 ```bash
-git clone https://github.com/yourname/go-start.git
+git clone https://github.com/Martindeeepdark/go-start.git
 cd go-start
 go build -o bin/go-start ./cmd/go-start/
 sudo mv bin/go-start /usr/local/bin/
@@ -381,9 +381,8 @@ my-api/
 
 ## 📮 联系方式
 
-- **问题反馈**: [GitHub Issues](https://github.com/yourname/go-start/issues)
-- **功能建议**: [GitHub Discussions](https://github.com/yourname/go-start/discussions)
-- **邮件**: yourname@example.com
+- **问题反馈**: [GitHub Issues](https://github.com/Martindeeepdark/go-start/issues)
+- **功能建议**: [GitHub Discussions](https://github.com/Martindeeepdark/go-start/discussions)
 
 ---
 
@@ -391,6 +390,6 @@ my-api/
 
 **⭐ 如果这个项目对你有帮助，请给个 Star 支持一下！**
 
-Made with ❤️ by [Your Name](https://github.com/yourname)
+Made with ❤️ by [Martindeeepdark](https://github.com/Martindeeepdark)
 
 </div>

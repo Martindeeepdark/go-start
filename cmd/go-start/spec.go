@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/yourname/go-start/pkg/spec"
+	"github.com/Martindeeepdark/go-start/pkg/spec"
 )
 
 var (

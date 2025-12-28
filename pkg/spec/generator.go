@@ -238,13 +238,59 @@ func (g *Generator) generateValidators() error {
 func (g *Generator) generateRoutes() error {
 	fmt.Println("\n📦 生成路由注册...")
 
-	outputPath := filepath.Join(g.outputDir, "internal/routes", "auto_routes.go")
+    outputPath := filepath.Join(g.outputDir, "internal/routes", "auto_routes.go")
 
-	if err := g.generateFile("routes.go.tmpl", outputPath, map[string]interface{}{
-		"Spec": g.spec,
-	}); err != nil {
-		return err
-	}
+    // Build per-model auth/permission info for routes
+    type routeInfo struct {
+        ModelName string
+        ModelVar  string
+        CreateAuth bool
+        UpdateAuth bool
+        GetAuth    bool
+        DeleteAuth bool
+        ListAuth   bool
+        CreatePerm string
+        UpdatePerm string
+        GetPerm    string
+        DeletePerm string
+        ListPerm   string
+    }
+
+    var modelsInfo []routeInfo
+    for _, model := range g.spec.Models {
+        endpoints := g.spec.GetEndpointsByModel(model.Name)
+        ri := routeInfo{ModelName: model.Name, ModelVar: toLowerCamelCase(model.Name)}
+        for _, ep := range endpoints {
+            m := strings.ToUpper(ep.Method)
+            switch m {
+            case "POST":
+                if ep.Auth { ri.CreateAuth = true }
+                if ep.Permission != "" && ri.CreatePerm == "" { ri.CreatePerm = ep.Permission }
+            case "PUT":
+                if ep.Auth { ri.UpdateAuth = true }
+                if ep.Permission != "" && ri.UpdatePerm == "" { ri.UpdatePerm = ep.Permission }
+            case "GET":
+                if strings.Contains(ep.Path, ":") {
+                    if ep.Auth { ri.GetAuth = true }
+                    if ep.Permission != "" && ri.GetPerm == "" { ri.GetPerm = ep.Permission }
+                } else {
+                    if ep.Auth { ri.ListAuth = true }
+                    if ep.Permission != "" && ri.ListPerm == "" { ri.ListPerm = ep.Permission }
+                }
+            case "DELETE":
+                if ep.Auth { ri.DeleteAuth = true }
+                if ep.Permission != "" && ri.DeletePerm == "" { ri.DeletePerm = ep.Permission }
+            }
+        }
+        modelsInfo = append(modelsInfo, ri)
+    }
+
+    if err := g.generateFile("routes.go.tmpl", outputPath, map[string]interface{}{
+        "Spec":       g.spec,
+        "ModelsInfo": modelsInfo,
+    }); err != nil {
+        return err
+    }
 
 	fmt.Printf("  ✓ 自动路由注册\n")
 
@@ -274,6 +320,7 @@ func (g *Generator) generateFile(templateName, outputPath string, data interface
         "getGormTag":       getGormTag,
         "getJSONTag":       getJSONTag,
         "getIndexTags":     getIndexTags,
+        "getReqFieldType":  getReqFieldType,
     }
 
 	tmpl, err := template.New(templateName).Funcs(funcMap).Parse(templateContent)
@@ -397,9 +444,18 @@ func getGormTag(field FieldDef) string {
 		tags = append(tags, fmt.Sprintf("default:%s", field.Default))
 	}
 
-	if field.ForeignKey != "" {
-		tags = append(tags, fmt.Sprintf("foreignKey:%s", field.ForeignKey))
-	}
+    if field.ForeignKey != "" {
+        tags = append(tags, fmt.Sprintf("foreignKey:%s", field.ForeignKey))
+        // configurable FK strategies
+        onUpdate := "CASCADE"
+        onDelete := "SET NULL"
+        if field.NotNull {
+            onDelete = "CASCADE"
+        }
+        if field.OnUpdate != "" { onUpdate = field.OnUpdate }
+        if field.OnDelete != "" { onDelete = field.OnDelete }
+        tags = append(tags, fmt.Sprintf("constraint:OnUpdate:%s,OnDelete:%s", onUpdate, onDelete))
+    }
 
 	if field.AutoCreateTime {
 		tags = append(tags, "autoCreateTime")
@@ -414,6 +470,22 @@ func getGormTag(field FieldDef) string {
 	}
 
 	return strings.Join(tags, ";")
+}
+
+// getReqFieldType 根据规则字符串推断请求校验结构的字段类型
+// 简化映射：包含 array -> []string；包含 numeric -> int；包含 bool -> bool；否则 string
+func getReqFieldType(rules string) string {
+    rs := strings.ToLower(rules)
+    if strings.Contains(rs, "array") {
+        return "[]string"
+    }
+    if strings.Contains(rs, "numeric") {
+        return "int"
+    }
+    if strings.Contains(rs, "bool") || strings.Contains(rs, "boolean") {
+        return "bool"
+    }
+    return "string"
 }
 
 func getIndexTags(fieldName string, indexes []IndexDef) string {

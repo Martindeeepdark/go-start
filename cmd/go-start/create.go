@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
-	"github.com/yourname/go-start/pkg/wizard"
+	"github.com/Martindeeepdark/go-start/pkg/wizard"
 )
 
 var (

@@ -101,7 +101,7 @@ import (
     "{{.Spec.Project.Module}}/internal/model"
     "{{.Spec.Project.Module}}/internal/repository"
     {{- if or .GetCacheEnabled .ListCacheEnabled}}
-    "github.com/yourname/go-start/pkg/commonadapter"
+    "github.com/Martindeeepdark/go-start/pkg/commonadapter"
     {{- end}}
 )
 
@@ -119,6 +119,11 @@ var (
 //   - 实现业务的校验和规则
 type {{.Model.Name}}Service struct {
     repo  *repository.{{.Model.Name}}Repository
+}
+// listCacheEntry 用于列表缓存封装
+type listCacheEntry struct {
+    List []*model.{{.Model.Name}}
+    Total int64
 }
 
 // New{{.Model.Name}}Service 创建 {{.Model.Name}} 服务实例
@@ -196,9 +201,8 @@ func (s *{{.Model.Name}}Service) List(ctx context.Context, page, pageSize int) (
     cacheKey := fmt.Sprintf("{{.Model.Name | ToLowerCamelCase}}:list:%d:%d", page, pageSize)
     _, cache, _, _, _, _ := commonadapter.Abilities()
     if v, err := cache.Get(cacheKey); err == nil {
-        if res, ok := v.([]*model.{{.Model.Name}}); ok {
-            // 无 total 时仍需要查询 count，这里简化：回退到查询路径
-            return res, int64(len(res)), nil
+        if entry, ok := v.(*listCacheEntry); ok {
+            return entry.List, entry.Total, nil
         }
     }
     {{- end}}
@@ -208,7 +212,7 @@ func (s *{{.Model.Name}}Service) List(ctx context.Context, page, pageSize int) (
     }
     {{- if .ListCacheEnabled}}
     _, cache, _, _, _, _ := commonadapter.Abilities()
-    _ = cache.Set(cacheKey, res, {{if .ListCacheTTL}}{{.ListCacheTTL}}{{else}}300{{end}})
+    _ = cache.Set(cacheKey, &listCacheEntry{List: res, Total: total}, {{if .ListCacheTTL}}{{.ListCacheTTL}}{{else}}300{{end}})
     {{- end}}
     return res, total, nil
 }
@@ -224,7 +228,7 @@ import (
     "{{.Spec.Project.Module}}/internal/model"
     "{{.Spec.Project.Module}}/internal/service"
     "{{.Spec.Project.Module}}/pkg/httpx/response"
-    "github.com/yourname/go-start/pkg/commonadapter"
+    "github.com/Martindeeepdark/go-start/pkg/commonadapter"
     {{- if or .CreateValidator .UpdateValidator}}
     "{{.Spec.Project.Module}}/internal/validator"
     {{- end}}
@@ -258,20 +262,11 @@ func New{{.Model.Name}}Controller(service *service.{{.Model.Name}}Service) *{{.M
 // @Success 200 {object} response.Response
 // @Router /api/v1/{{.Model.Name | ToLowerCamelCase}}s [post]
 func (c *{{.Model.Name}}Controller) Create(ctx *gin.Context) {
-    token := ctx.GetHeader("Authorization")
-    if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") { token = token[7:] }
-    auth, _, audit, idemp, _, _ := commonadapter.Abilities()
+    _, _, audit, idemp, _, _ := commonadapter.Abilities()
     var userID string
-    {{- if .CreateAuth}}
-    {
-        var err error
-        userID, err = auth.VerifyToken(token)
-        if err != nil { response.Error(ctx, http.StatusUnauthorized, "未授权"); return }
-        {{- if .CreatePerm}}
-        if err := auth.RequirePermission(userID, "{{.CreatePerm}}"); err != nil { response.Error(ctx, http.StatusForbidden, "权限不足"); return }
-        {{- end}}
+    if v, ok := ctx.Get("UserID"); ok {
+        if s, ok2 := v.(string); ok2 { userID = s }
     }
-    {{- end}}
     ik := ctx.GetHeader("Idempotency-Key")
     if ik != "" {
         ok, err := idemp.CheckAndSet(ik, 600)
@@ -307,14 +302,10 @@ func (c *{{.Model.Name}}Controller) Create(ctx *gin.Context) {
 // GetByID 获取 {{.Model.Name}} 详情
 func (c *{{.Model.Name}}Controller) GetByID(ctx *gin.Context) {
     {{- if .GetAuth}}
-    token := ctx.GetHeader("Authorization")
-    if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") { token = token[7:] }
-    auth, _, _, _, _, _ := commonadapter.Abilities()
-    userID, err := auth.VerifyToken(token)
-    if err != nil { response.Error(ctx, http.StatusUnauthorized, "未授权"); return }
-    {{- if .GetPerm}}
-    if err := auth.RequirePermission(userID, "{{.GetPerm}}"); err != nil { response.Error(ctx, http.StatusForbidden, "权限不足"); return }
-    {{- end}}
+    var userID string
+    if v, ok := ctx.Get("UserID"); ok {
+        if s, ok2 := v.(string); ok2 { userID = s }
+    }
     {{- end}}
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -334,20 +325,11 @@ func (c *{{.Model.Name}}Controller) GetByID(ctx *gin.Context) {
 
 // Update 更新 {{.Model.Name}}
 func (c *{{.Model.Name}}Controller) Update(ctx *gin.Context) {
-    token := ctx.GetHeader("Authorization")
-    if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") { token = token[7:] }
-    auth, _, audit, _, _, _ := commonadapter.Abilities()
+    _, _, audit, _, _, _ := commonadapter.Abilities()
     var userID string
-    {{- if .UpdateAuth}}
-    {
-        var err error
-        userID, err = auth.VerifyToken(token)
-        if err != nil { response.Error(ctx, http.StatusUnauthorized, "未授权"); return }
-        {{- if .UpdatePerm}}
-        if err := auth.RequirePermission(userID, "{{.UpdatePerm}}"); err != nil { response.Error(ctx, http.StatusForbidden, "权限不足"); return }
-        {{- end}}
+    if v, ok := ctx.Get("UserID"); ok {
+        if s, ok2 := v.(string); ok2 { userID = s }
     }
-    {{- end}}
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -384,20 +366,11 @@ func (c *{{.Model.Name}}Controller) Update(ctx *gin.Context) {
 
 // Delete 删除 {{.Model.Name}}
 func (c *{{.Model.Name}}Controller) Delete(ctx *gin.Context) {
-    token := ctx.GetHeader("Authorization")
-    if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") { token = token[7:] }
-    auth, _, audit, _, _, _ := commonadapter.Abilities()
+    _, _, audit, _, _, _ := commonadapter.Abilities()
     var userID string
-    {{- if .DeleteAuth}}
-    {
-        var err error
-        userID, err = auth.VerifyToken(token)
-        if err != nil { response.Error(ctx, http.StatusUnauthorized, "未授权"); return }
-        {{- if .DeletePerm}}
-        if err := auth.RequirePermission(userID, "{{.DeletePerm}}"); err != nil { response.Error(ctx, http.StatusForbidden, "权限不足"); return }
-        {{- end}}
+    if v, ok := ctx.Get("UserID"); ok {
+        if s, ok2 := v.(string); ok2 { userID = s }
     }
-    {{- end}}
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -448,25 +421,61 @@ const routesTemplate = `package routes
 import (
     "github.com/gin-gonic/gin"
     "{{.Spec.Project.Module}}/internal/controller"
+    "github.com/Martindeeepdark/go-start/pkg/httpx/middleware"
 )
 
 // RegisterAutoRoutes 自动注册所有路由
 //
 // 此文件由 spec 工具自动生成，请勿手动修改
 func RegisterAutoRoutes(r *gin.Engine, controllers *controller.Controllers) {
-	v1 := r.Group("/api/v1")
-	{
-		{{- range $model := .Spec.Models}}
-		{{ToLowerCamelCase $model.Name}} := v1.Group("/{{pluralize (ToLowerCamelCase $model.Name)}}")
-		{
-			{{ToLowerCamelCase $model.Name}}.POST("", controllers.{{$model.Name}}.Create)
-			{{ToLowerCamelCase $model.Name}}.GET("", controllers.{{$model.Name}}.List)
-			{{ToLowerCamelCase $model.Name}}.GET("/:id", controllers.{{$model.Name}}.GetByID)
-			{{ToLowerCamelCase $model.Name}}.PUT("/:id", controllers.{{$model.Name}}.Update)
-			{{ToLowerCamelCase $model.Name}}.DELETE("/:id", controllers.{{$model.Name}}.Delete)
-		}
-		{{- end}}
-	}
+    v1 := r.Group("/api/v1")
+    {
+        {{- range $info := .ModelsInfo}}
+        {{$info.ModelVar}} := v1.Group("/{{pluralize $info.ModelVar}}")
+        {
+            // Create
+            {{$info.ModelVar}}.POST("",
+                {{- if or $info.CreateAuth $info.CreatePerm}}
+                {{- if $info.CreateAuth}}middleware.RequireAuth(),{{end}}
+                {{- if $info.CreatePerm}}middleware.RequirePermission("{{$info.CreatePerm}}"),{{end}}
+                {{- end}}
+                controllers.{{$info.ModelName}}.Create,
+            )
+            // List
+            {{$info.ModelVar}}.GET("",
+                {{- if or $info.ListAuth $info.ListPerm}}
+                {{- if $info.ListAuth}}middleware.RequireAuth(),{{end}}
+                {{- if $info.ListPerm}}middleware.RequirePermission("{{$info.ListPerm}}"),{{end}}
+                {{- end}}
+                controllers.{{$info.ModelName}}.List,
+            )
+            // GetByID
+            {{$info.ModelVar}}.GET("/:id",
+                {{- if or $info.GetAuth $info.GetPerm}}
+                {{- if $info.GetAuth}}middleware.RequireAuth(),{{end}}
+                {{- if $info.GetPerm}}middleware.RequirePermission("{{$info.GetPerm}}"),{{end}}
+                {{- end}}
+                controllers.{{$info.ModelName}}.GetByID,
+            )
+            // Update
+            {{$info.ModelVar}}.PUT("/:id",
+                {{- if or $info.UpdateAuth $info.UpdatePerm}}
+                {{- if $info.UpdateAuth}}middleware.RequireAuth(),{{end}}
+                {{- if $info.UpdatePerm}}middleware.RequirePermission("{{$info.UpdatePerm}}"),{{end}}
+                {{- end}}
+                controllers.{{$info.ModelName}}.Update,
+            )
+            // Delete
+            {{$info.ModelVar}}.DELETE("/:id",
+                {{- if or $info.DeleteAuth $info.DeletePerm}}
+                {{- if $info.DeleteAuth}}middleware.RequireAuth(),{{end}}
+                {{- if $info.DeletePerm}}middleware.RequirePermission("{{$info.DeletePerm}}"),{{end}}
+                {{- end}}
+                controllers.{{$info.ModelName}}.Delete,
+            )
+        }
+        {{- end}}
+    }
 }
 `
 
@@ -481,7 +490,7 @@ import (
 // 使用 validator.v10 进行字段规则校验
 type {{.Request.Name}} struct {
     {{- range $f := .Request.Fields}}
-    {{ToCamelCase $f.Name}} string ` + "`" + `validate:"{{$f.Rules}}"` + "`" + ` // {{$f.Comment}}
+    {{ToCamelCase $f.Name}} {{getReqFieldType $f.Rules}} ` + "`" + `validate:"{{$f.Rules}}"` + "`" + ` // {{$f.Comment}}
     {{- end}}
 }
 

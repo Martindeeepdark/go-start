@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/yourname/go-start/pkg/gen"
+	"github.com/Martindeeepdark/go-start/pkg/gen"
 )
 
 var (

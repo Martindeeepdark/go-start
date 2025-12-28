@@ -25,6 +25,7 @@ with MVC or DDD architecture, powered by Gin framework.`,
 	rootCmd.AddCommand(newRunCmd())
 	rootCmd.AddCommand(newSpecCmd())
 	rootCmd.AddCommand(newGenCmd())
+	rootCmd.AddCommand(newDoctorCmd())
 	rootCmd.AddCommand(newVersionCmd())
 
 	if err := rootCmd.Execute(); err != nil {
