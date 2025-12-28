@@ -11,10 +11,17 @@ import (
 func newRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
-		Short: "Run the project in development mode",
-		Long: `Run the project with hot reload support using air.
+		Short: "在开发模式下运行项目",
+		Long: `使用 air 热加载功能运行项目。
 
-If air is not installed, it will run the project directly without hot reload.`,
+如果未安装 air,则直接运行项目(无热加载)。
+
+示例:
+  go-start run                 # 运行项目
+  go-start run --verbose       # 显示详细日志
+
+提示:
+  安装 air 以支持热加载: go install github.com/cosmtrek/air@latest`,
 		RunE: runRun,
 	}
 

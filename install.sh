@@ -73,8 +73,28 @@ echo "✅ 检测到 Go: $(go version)"
 echo ""
 
 # 检测 Go bin 路径
-GO_BIN=$(go env GOPATH)/bin
-echo "📦 Go bin 路径: $GO_BIN"
+GOPATH=$(go env GOPATH)
+GOBIN="$GOPATH/bin"
+
+# Go 1.24+ 会安装到平台特定子目录 (如 darwin_arm64)
+GOOS=$(go env GOOS)
+GOARCH=$(go env GOARCH)
+PLATFORM_DIR="$GOBIN/${GOOS}_${GOARCH}"
+
+# 检测实际的可执行文件路径
+if [ -f "$PLATFORM_DIR/go-start" ]; then
+    # Go 1.24+: 文件在平台子目录中
+    ACTUAL_BIN_PATH="$PLATFORM_DIR/go-start"
+    # 创建符号链接到 bin 目录
+    if [ ! -L "$GOBIN/go-start" ] && [ ! -f "$GOBIN/go-start" ]; then
+        ln -s "$PLATFORM_DIR/go-start" "$GOBIN/go-start" 2>/dev/null || true
+    fi
+else
+    # Go < 1.24: 文件直接在 bin 目录中
+    ACTUAL_BIN_PATH="$GOBIN/go-start"
+fi
+
+echo "📦 Go bin 路径: $GOBIN"
 echo ""
 
 # 安装 go-start
@@ -99,25 +119,36 @@ else
     exit 1
 fi
 
-if [ ! -f "$GO_BIN/go-start" ]; then
+# 检测实际安装位置
+if [ -f "$PLATFORM_DIR/go-start" ]; then
+    ACTUAL_BIN_PATH="$PLATFORM_DIR/go-start"
+    # 创建符号链接 (如果不存在)
+    if [ ! -L "$GOBIN/go-start" ] && [ ! -f "$GOBIN/go-start" ]; then
+        ln -s "$PLATFORM_DIR/go-start" "$GOBIN/go-start"
+        echo "🔗 创建符号链接: $GOBIN/go-start -> $PLATFORM_DIR/go-start"
+    fi
+elif [ -f "$GOBIN/go-start" ]; then
+    ACTUAL_BIN_PATH="$GOBIN/go-start"
+else
     echo "❌ 安装失败: 未找到可执行文件"
-    echo "   期望路径: $GO_BIN/go-start"
+    echo "   检查了以下路径:"
+    echo "   - $GOBIN/go-start"
+    echo "   - $PLATFORM_DIR/go-start"
     exit 1
 fi
 
-echo "✅ go-start 已安装到: $GO_BIN/go-start"
+echo "✅ go-start 已安装到: $ACTUAL_BIN_PATH"
 echo ""
 
 # 检查是否在 PATH 中
-check_path:
-if echo $PATH | grep -q "$GO_BIN"; then
-    echo "✅ $GO_BIN 已在 PATH 中"
+if echo $PATH | grep -q "$GOBIN"; then
+    echo "✅ $GOBIN 已在 PATH 中"
     echo ""
     echo "🎉 安装完成!可以直接使用:"
     echo "   go-start --version"
     echo ""
 else
-    echo "⚠️  $GO_BIN 不在 PATH 中,正在自动添加..."
+    echo "⚠️  $GOBIN 不在 PATH 中,正在自动添加..."
     echo ""
 
     # 检测 shell 类型
@@ -150,7 +181,7 @@ else
         echo "⚠️  无法自动检测 shell 配置文件"
         echo ""
         echo "📝 请手动运行以下命令:"
-        echo "   export PATH=\"\$PATH:$GO_BIN\""
+        echo "   export PATH=\"\$PATH:$GOBIN\""
         echo ""
         echo "   或者添加到你的 shell 配置文件中"
         echo ""

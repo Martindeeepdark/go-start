@@ -1,51 +1,190 @@
 package main
 
 import (
-    "fmt"
-    "os"
-    "path/filepath"
-    "runtime"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 
-    "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
+	"github.com/Martindeeepdark/go-start/pkg/check"
 )
 
 // newDoctorCmd 创建 doctor 命令
 // 用于检查本地开发环境与项目配置的常见问题，并提供修复建议。
 func newDoctorCmd() *cobra.Command {
-    cmd := &cobra.Command{
-        Use:   "doctor",
-        Short: "诊断本地环境与项目配置",
-        RunE: func(cmd *cobra.Command, args []string) error {
-            fmt.Println("🔍 环境与项目诊断")
+	cmd := &cobra.Command{
+		Use:   "doctor",
+		Short: "诊断本地环境与项目配置",
+		Long: `检查开发环境配置,确保 go-start 可以正常工作。
 
-            // 1. Go 版本
-            fmt.Printf("• Go 版本: %s\n", runtime.Version())
+检查项目:
+  • Go 版本兼容性
+  • 数据库连接
+  • 必要的依赖工具
+  • 项目配置文件
 
-            // 2. 工作区 (go.work) 检查
-            if hasGoWork() {
-                fmt.Println("• go.work: ✅ 已检测到工作区配置")
-            } else {
-                fmt.Println("• go.work: ⚠️ 未检测到，建议在 common 与 go-start 的父目录使用 go work 管理本地联动")
-                fmt.Println("  参考: go work init && go work use ./go-start ./common")
-            }
+示例:
+  go-start doctor              # 检查所有项目
+  go-start doctor --verbose    # 显示详细信息`,
+		RunE: runDoctor,
+	}
 
-            // 3. go.mod 模块路径一致性
-            modPath, err := readModulePath()
-            if err != nil {
-                fmt.Printf("• go.mod: ❌ 读取失败: %v\n", err)
-            } else {
-                fmt.Printf("• go.mod: 模块路径为 %s\n", modPath)
-            }
+	return cmd
+}
 
-            // 4. 常见依赖提示
-            fmt.Println("• 依赖建议: 建议引入 golangci-lint 与 CI 测试覆盖率，提升代码质量")
-            fmt.Println("• 适配建议: 使用构建标签启用 common 集成 (-tags common_integration)，便于能力按需加载")
+func runDoctor(cmd *cobra.Command, args []string) error {
+	fmt.Println(`
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║   🔍 go-start 环境诊断工具                                ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+`)
 
-            fmt.Println("\n✅ 诊断完成")
-            return nil
-        },
-    }
-    return cmd
+	allPassed := true
+
+	// 1. Go 版本检查
+	fmt.Println("📌 检查 Go 版本...")
+	goVersionInfo := check.CheckGoVersion()
+	check.PrintVersionInfo(goVersionInfo)
+	if !goVersionInfo.Valid {
+		allPassed = false
+	}
+
+	// 2. 检查必要工具
+	fmt.Println("📌 检查必要工具...")
+	checkTools()
+
+	// 3. 数据库连接检查
+	fmt.Println("📌 检查数据库连接...")
+	checkDatabase()
+
+	// 4. 项目配置检查
+	fmt.Println("📌 检查项目配置...")
+	checkProjectConfig()
+
+	// 总结
+	fmt.Println(`
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+`)
+	if allPassed {
+		fmt.Println("║   ✅ 所有检查通过!环境配置正确                             ║")
+	} else {
+		fmt.Println("║   ⚠️  发现一些问题,请根据上述提示修复                       ║")
+	}
+	fmt.Println(`║                                                           ║
+╚═══════════════════════════════════════════════════════════╝`)
+
+	return nil
+}
+
+// checkTools 检查必要的开发工具
+func checkTools() {
+	tools := []struct {
+		name  string
+		cmd   string
+		args  string
+		need  bool
+		hint  string
+	}{
+		{
+			name: "Go",
+			cmd:  "go",
+			args: "version",
+			need: true,
+			hint: "",
+		},
+		{
+			name: "Git",
+			cmd:  "git",
+			args: "version",
+			need: true,
+			hint: "",
+		},
+		{
+			name: "Docker",
+			cmd:  "docker",
+			args: "version",
+			need: false,
+			hint: "可选,用于容器化部署",
+		},
+		{
+			name: "golangci-lint",
+			cmd:  "golangci-lint",
+			args: "version",
+			need: false,
+			hint: "推荐,用于代码质量检查",
+		},
+	}
+
+	for _, tool := range tools {
+		cmd := exec.Command(tool.cmd, tool.args)
+		if err := cmd.Run(); err != nil {
+			if tool.need {
+				fmt.Printf("   ❌ %s 未安装\n", tool.name)
+				fmt.Printf("      请安装 %s 后重试\n", tool.name)
+			} else {
+				fmt.Printf("   ⚠️  %s 未安装 (可选)\n", tool.name)
+				if tool.hint != "" {
+					fmt.Printf("      %s\n", tool.hint)
+				}
+			}
+		} else {
+			fmt.Printf("   ✅ %s 已安装\n", tool.name)
+		}
+	}
+	fmt.Println()
+}
+
+// checkDatabase 检查数据库连接
+func checkDatabase() {
+	// 检查是否有 config.yaml
+	configFiles := []string{"config.yaml", "config.yaml.example"}
+	foundConfig := false
+
+	for _, configFile := range configFiles {
+		if _, err := os.Stat(configFile); err == nil {
+			fmt.Printf("   ✅ 找到配置文件: %s\n", configFile)
+			foundConfig = true
+			break
+		}
+	}
+
+	if !foundConfig {
+		fmt.Println("   ⚠️  未找到配置文件 config.yaml")
+		fmt.Println("      提示: 在创建项目后,需要复制 config.yaml.example 为 config.yaml")
+		fmt.Println("      命令: cp config.yaml.example config.yaml")
+		fmt.Println()
+		return
+	}
+
+	// 检查数据库服务是否运行
+	fmt.Println("   💡 提示: 运行以下命令测试数据库连接:")
+	fmt.Println("      go-start check db --config=config.yaml")
+	fmt.Println()
+}
+
+// checkProjectConfig 检查项目配置
+func checkProjectConfig() {
+	// 检查 go.mod
+	if _, err := os.Stat("go.mod"); err == nil {
+		fmt.Println("   ✅ 找到 go.mod")
+
+		// 读取模块路径
+		modPath, err := readModulePath()
+		if err != nil {
+			fmt.Printf("   ⚠️  无法读取模块路径: %v\n", err)
+		} else {
+			fmt.Printf("      模块路径: %s\n", modPath)
+		}
+	} else {
+		fmt.Println("   ⚠️  未找到 go.mod")
+		fmt.Println("      请在项目根目录运行此命令")
+	}
+
+	fmt.Println()
 }
 
 // hasGoWork 检查当前或父级目录是否存在 go.work 文件

@@ -20,7 +20,7 @@ func NewUserRepositoryImpl(db *gorm.DB) user.UserRepository {
 
 // Save 保存用户
 func (r *UserRepositoryImpl) Save(ctx context.Context, u *user.User) error {
-	// TODO: 领域模型与数据模型转换
+	// 实现领域模型与数据模型转换
 	// dataModel := r.toDataModel(u)
 	// return r.db.WithContext(ctx).Save(dataModel).Error
 	return fmt.Errorf("not implemented")
@@ -28,7 +28,7 @@ func (r *UserRepositoryImpl) Save(ctx context.Context, u *user.User) error {
 
 // FindByID 根据 ID 查找用户
 func (r *UserRepositoryImpl) FindByID(ctx context.Context, id uint) (*user.User, error) {
-	// TODO: 查询并转换为领域模型
+	// 实现查询并转换为领域模型
 	// var dataModel UserDataModel
 	// err := r.db.WithContext(ctx).First(&dataModel, id).Error
 	// if err != nil {

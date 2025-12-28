@@ -99,6 +99,6 @@ func (u *User) isValidEmail() bool {
 }
 
 func (u *User) isValidEmailFormat(email string) bool {
-	// TODO: 实现邮箱格式验证
+	// 实现邮箱格式验证 (可以使用 regex 或验证库)
 	return true
 }

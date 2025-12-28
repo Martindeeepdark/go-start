@@ -16,9 +16,9 @@ var (
 func main() {
 	var rootCmd = &cobra.Command{
 		Use:   "go-start",
-		Short: "A Go project scaffold tool",
-		Long: `go-start is a CLI tool that helps you quickly create Go projects
-with MVC or DDD architecture, powered by Gin framework.`,
+		Short: "快速创建 Go Web 项目的脚手架工具",
+		Long: `go-start 是一个命令行工具,帮助你快速创建基于 Gin 框架的 Go Web 项目
+支持 MVC 和 DDD 两种架构模式,可以从数据库自动生成完整的 CRUD API。`,
 		Version: Version,
 	}
 
@@ -30,7 +30,7 @@ with MVC or DDD architecture, powered by Gin framework.`,
 	rootCmd.AddCommand(newVersionCmd())
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "错误: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -38,10 +38,11 @@ with MVC or DDD architecture, powered by Gin framework.`,
 func newVersionCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
-		Short: "Print the version number",
+		Short: "显示版本号",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("go-start version %s\n", Version)
+			fmt.Printf("go-start 版本 %s\n", Version)
 			fmt.Println("GitHub: https://github.com/Martindeeepdark/go-start")
+			fmt.Println("文档: https://github.com/Martindeeepdark/go-start#readme")
 		},
 	}
 }

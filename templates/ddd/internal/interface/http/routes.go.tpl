@@ -13,9 +13,9 @@ func RegisterRoutes(r *gin.Engine, controllers *Controllers) {
 		{
 			userGroup.POST("", controllers.User.CreateUser)
 			userGroup.PUT("/:id/email", controllers.User.UpdateEmail)
-			// TODO: 添加其他路由
+			// 在此添加更多用户相关路由
 		}
 
-		// TODO: 添加其他聚合的路由
+		// 在此添加其他聚合的路由 (如: /articles, /comments 等)
 	}
 }

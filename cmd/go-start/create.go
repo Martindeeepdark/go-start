@@ -24,21 +24,21 @@ var (
 
 func newCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create <project-name>",
-		Short: "Create a new project",
-		Long: `Create a new Go project with MVC architecture.
+		Use:   "create <项目名称>",
+		Short: "创建新项目",
+		Long: `创建一个新的 Go Web 项目,支持 MVC 和 DDD 架构。
 
-Example:
-  go-start create my-api
-  go-start create my-api --arch=Mvc
-  go-start create my-api --module=github.com/myname/my-api
-  go-start create my-api --wizard    # 使用交互式向导`,
+示例:
+  go-start create my-api                    # 使用默认配置创建
+  go-start create my-api --arch=ddd         # 使用 DDD 架构
+  go-start create my-api --module=github.com/用户名/my-api  # 指定模块名
+  go-start create --wizard                  # 使用交互式向导`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: runCreate,
 	}
 
-	cmd.Flags().StringVarP(&archType, "arch", "a", "mvc", "Project architecture (mvc, ddd)")
-	cmd.Flags().StringVarP(&module, "module", "m", "", "Go module name (default: github.com/yourname/<project-name>)")
+	cmd.Flags().StringVarP(&archType, "arch", "a", "mvc", "项目架构类型 (mvc, ddd)")
+	cmd.Flags().StringVarP(&module, "module", "m", "", "Go 模块名 (默认: github.com/yourname/<项目名称>)")
 	cmd.Flags().BoolVarP(&useWizard, "wizard", "w", false, "使用交互式向导创建项目")
 
 	return cmd
