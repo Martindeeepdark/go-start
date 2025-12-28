@@ -254,7 +254,7 @@ func generateMVCProject(projectDir, projectName, module string) error {
 func generateGoMod(projectDir, projectName, module string) error {
 	goModContent := fmt.Sprintf(`module %s
 
-go 1.25.4
+go 1.21
 
 require (
 	github.com/gin-gonic/gin v1.10.0
@@ -513,7 +513,7 @@ func generateMVCProjectWithOptions(projectDir string, config *wizard.ProjectConf
 func generateGoModWithOptions(projectDir string, config *wizard.ProjectConfig) error {
 	modContent := fmt.Sprintf(`module %s
 
-go 1.25.4
+go 1.21
 
 require (
 	github.com/gin-gonic/gin v1.10.0
