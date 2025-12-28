@@ -1,7 +1,9 @@
 package main
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/Martindeeepdark/go-start/pkg/wizard"
 )
+
+//go:embed templates/*
+var templatesFS embed.FS
 
 var (
 	archType  string
@@ -266,13 +271,17 @@ require (
 }
 
 func generateFileFromTemplate(projectDir, outputPath, templateName string, data interface{}) error {
-	// Get template path
-	templatePath := filepath.Join(getTemplateDir(), "mvc", templateName)
+	// Try embedded templates first
+	templatePath := filepath.Join("templates", "mvc", templateName)
 
-	// Read template
-	templateContent, err := os.ReadFile(templatePath)
+	templateContent, err := fs.ReadFile(templatesFS, templatePath)
 	if err != nil {
-		return fmt.Errorf("failed to read template: %w", err)
+		// Fallback to filesystem
+		fallbackPath := filepath.Join(getTemplateDir(), "mvc", templateName)
+		templateContent, err = os.ReadFile(fallbackPath)
+		if err != nil {
+			return fmt.Errorf("failed to read template %s: %w", templateName, err)
+		}
 	}
 
 	// Parse template
