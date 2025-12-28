@@ -4,8 +4,8 @@ import (
     "strings"
 
     "github.com/gin-gonic/gin"
-    "github.com/yourname/go-start/pkg/commonadapter"
-    "github.com/yourname/go-start/pkg/httpx/response"
+    "github.com/Martindeeepdark/go-start/pkg/commonadapter"
+    "github.com/Martindeeepdark/go-start/pkg/httpx/response"
 )
 
 const userIDKey = "UserID"

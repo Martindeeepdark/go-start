@@ -4,7 +4,7 @@ import (
     "context"
     "testing"
 
-    "github.com/yourname/go-start/pkg/spec"
+    "github.com/Martindeeepdark/go-start/pkg/spec"
 )
 
 // TestNoopAdapterValidate 验证默认实现的基础校验逻辑
@@ -14,7 +14,7 @@ func TestNoopAdapterValidate(t *testing.T) {
 
     s := &spec.Spec{
         Name: "ExampleAPI",
-        Project: spec.ProjectConfig{Module: "github.com/yourname/example"},
+        Project: spec.ProjectConfig{Module: "github.com/Martindeeepdark/example"},
     }
 
     if err := a.Validate(ctx, s); err != nil {
@@ -28,7 +28,7 @@ func TestNoopAdapterGenerate(t *testing.T) {
     ctx := context.Background()
     s := &spec.Spec{
         Name: "ExampleAPI",
-        Project: spec.ProjectConfig{Module: "github.com/yourname/example"},
+        Project: spec.ProjectConfig{Module: "github.com/Martindeeepdark/example"},
     }
 
     _, err := a.Generate(ctx, s, "/tmp/output")

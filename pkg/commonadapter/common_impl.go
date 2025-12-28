@@ -6,8 +6,8 @@ import (
     "context"
     "fmt"
 
-    _ "github.com/yourname/common"
-    "github.com/yourname/go-start/pkg/spec"
+    // _ "github.com/Martindeeepdark/common" // TODO: 实现这个包或移除此依赖
+    "github.com/Martindeeepdark/go-start/pkg/spec"
 )
 
 // CommonAdapter 为启用 common 集成时的适配器实现

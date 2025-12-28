@@ -6,7 +6,7 @@ import (
     "fmt"
     "time"
 
-    "github.com/yourname/go-start/pkg/spec"
+    "github.com/Martindeeepdark/go-start/pkg/spec"
 )
 
 // NoopAdapter 为默认的本地实现
