@@ -7,23 +7,34 @@ import (
 	"gorm.io/gorm"
 )
 
-// UserRepository represents the user repository
-type UserRepository struct {
+// UserRepository 定义用户数据访问接口
+type UserRepository interface {
+	Create(ctx context.Context, user *model.User) error
+	FindByID(ctx context.Context, id uint) (*model.User, error)
+	FindByUsername(ctx context.Context, username string) (*model.User, error)
+	FindByEmail(ctx context.Context, email string) (*model.User, error)
+	Update(ctx context.Context, user *model.User) error
+	Delete(ctx context.Context, id uint) error
+	List(ctx context.Context, page, pageSize int) ([]*model.User, int64, error)
+}
+
+// userRepository 用户数据访问实现
+type userRepository struct {
 	db *gorm.DB
 }
 
-// NewUserRepository creates a new user repository instance
-func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{db: db}
+// NewUserRepository 创建新的用户仓储实例
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return &userRepository{db: db}
 }
 
-// Create creates a new user
-func (r *UserRepository) Create(ctx context.Context, user *model.User) error {
+// Create 创建新用户
+func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 	return r.db.WithContext(ctx).Create(user).Error
 }
 
-// GetByID gets a user by ID
-func (r *UserRepository) GetByID(ctx context.Context, id uint) (*model.User, error) {
+// FindByID 根据 ID 查找用户
+func (r *userRepository) FindByID(ctx context.Context, id uint) (*model.User, error) {
 	var user model.User
 	err := r.db.WithContext(ctx).First(&user, id).Error
 	if err != nil {
@@ -32,8 +43,8 @@ func (r *UserRepository) GetByID(ctx context.Context, id uint) (*model.User, err
 	return &user, nil
 }
 
-// GetByUsername gets a user by username
-func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+// FindByUsername 根据用户名查找用户
+func (r *userRepository) FindByUsername(ctx context.Context, username string) (*model.User, error) {
 	var user model.User
 	err := r.db.WithContext(ctx).Where("username = ?", username).First(&user).Error
 	if err != nil {
@@ -42,18 +53,28 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*m
 	return &user, nil
 }
 
-// Update updates a user
-func (r *UserRepository) Update(ctx context.Context, user *model.User) error {
+// FindByEmail 根据邮箱查找用户
+func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	var user model.User
+	err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// Update 更新用户
+func (r *userRepository) Update(ctx context.Context, user *model.User) error {
 	return r.db.WithContext(ctx).Save(user).Error
 }
 
-// Delete deletes a user
-func (r *UserRepository) Delete(ctx context.Context, id uint) error {
+// Delete 删除用户
+func (r *userRepository) Delete(ctx context.Context, id uint) error {
 	return r.db.WithContext(ctx).Delete(&model.User{}, id).Error
 }
 
-// List lists users with pagination
-func (r *UserRepository) List(ctx context.Context, page, pageSize int) ([]*model.User, int64, error) {
+// List 分页查询用户列表
+func (r *userRepository) List(ctx context.Context, page, pageSize int) ([]*model.User, int64, error) {
 	var users []*model.User
 	var total int64
 
@@ -65,3 +86,4 @@ func (r *UserRepository) List(ctx context.Context, page, pageSize int) ([]*model
 	err := r.db.WithContext(ctx).Offset(offset).Limit(pageSize).Find(&users).Error
 	return users, total, err
 }
+

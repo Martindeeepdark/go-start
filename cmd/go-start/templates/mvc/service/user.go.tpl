@@ -29,19 +29,19 @@ var (
 //   service := service.NewUserService(userRepo, cacheClient)
 //   user, err := service.GetByID(ctx, 1)
 type UserService struct {
-	repo  *repository.UserRepository // 用户数据访问层
+	repo  repository.UserRepository // 用户数据访问层接口
 	cache *cache.Cache              // Redis 缓存客户端
 }
 
 // NewUserService 创建用户服务实例
 //
 // 参数：
-//   - repo: 用户数据访问层，负责数据库操作
+//   - repo: 用户数据访问层接口，负责数据库操作
 //   - cache: Redis 缓存客户端，负责缓存操作
 //
 // 返回：
 //   - *UserService: 用户服务实例
-func NewUserService(repo *repository.UserRepository, cache *cache.Cache) *UserService {
+func NewUserService(repo repository.UserRepository, cache *cache.Cache) *UserService {
 	return &UserService{
 		repo:  repo,
 		cache: cache,
