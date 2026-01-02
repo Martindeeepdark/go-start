@@ -11,11 +11,9 @@ import (
 // GenerateGoMod 生成 go.mod 文件
 func (g *DatabaseGenerator) GenerateGoMod() error {
 	modulePath := getModulePath(g.config.Module)
-	if modulePath == "github.com/yourname/project" {
-		// 如果使用默认值，给出警告但仍然生成
-		fmt.Println("⚠️  使用默认模块路径 github.com/yourname/project")
-		fmt.Println("    建议使用 --module 参数指定您的项目路径")
-		fmt.Println()
+	if modulePath == "" {
+		// 如果无法检测模块路径，给出错误
+		return fmt.Errorf("无法检测模块路径，请使用 --module 参数指定")
 	}
 
 	outputPath := g.config.Output

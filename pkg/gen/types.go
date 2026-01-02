@@ -336,12 +336,49 @@ func (g *DatabaseGenerator) generateControllerLayer() error {
 	return nil
 }
 
-// getModulePath 获取模块路径，如果为空则返回默认值
+// getModulePath 获取模块路径，如果为空则自动检测
 func getModulePath(modulePath string) string {
 	if modulePath == "" {
-		return "github.com/yourname/project"
+		// 自动检测模块路径
+		if detected := detectModulePath(); detected != "" {
+			return detected
+		}
+		// 如果检测失败，返回空字符串，让调用者处理
+		return ""
 	}
 	return modulePath
+}
+
+// detectModulePath 从 go.mod 文件检测模块路径
+func detectModulePath() string {
+	// 尝试读取当前目录的 go.mod
+	if modulePath := extractModulePath("go.mod"); modulePath != "" {
+		return modulePath
+	}
+	// 尝试读取父目录的 go.mod
+	// TODO: 可以向上递归查找
+	return ""
+}
+
+// extractModulePath 从 go.mod 文件提取模块路径
+func extractModulePath(goModPath string) string {
+	data, err := os.ReadFile(goModPath)
+	if err != nil {
+		return ""
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			modulePath := strings.TrimSpace(strings.TrimPrefix(line, "module "))
+			// 移除引号（如果有）
+			modulePath = strings.Trim(modulePath, `"`)
+			return modulePath
+		}
+	}
+
+	return ""
 }
 
 // toModelName 表名转模型名
