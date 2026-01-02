@@ -92,7 +92,7 @@ jobs:
         if [ "${{ matrix.goos }}" = "linux" ]; then
           tar czf "${OUTPUT_NAME}.tar.gz" "${OUTPUT_NAME}"
         elif [ "${{ matrix.goos }}" = "windows" ]; then
-          zip "${OUTPUT_NAME}.zip" "${OUTPUT_NAME}.exe"
+          zip "${OUTPUT_NAME}.zip" "${OUTPUT_NAME}"
         else
           tar czf "${OUTPUT_NAME}.tar.gz" "${OUTPUT_NAME}"
         fi
