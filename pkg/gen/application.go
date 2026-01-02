@@ -195,8 +195,8 @@ func getIntEnv(key string, defaultValue int) int {
 
 	// 准备模型名称和小驼峰名称的映射
 	type ModelInfo struct {
-		Name            string
-		LowerCamelCase  string
+		Name           string
+		LowerCamelCase string
 	}
 	var modelInfos []ModelInfo
 	for _, name := range modelNames {

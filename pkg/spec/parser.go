@@ -1,12 +1,12 @@
 package spec
 
 import (
-    "fmt"
-    "os"
-    "path/filepath"
-    "strings"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
-    "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 )
 
 // Spec represents the API specification
@@ -40,22 +40,22 @@ type ModelDefinition struct {
 
 // FieldDef represents a field definition
 type FieldDef struct {
-    Name           string `yaml:"name"`
-    Type           string `yaml:"type"`
-    Size           int    `yaml:"size,omitempty"`
-    PrimaryKey     bool   `yaml:"primary,omitempty"`
-    AutoIncrement  bool   `yaml:"autoIncrement,omitempty"`
-    NotNull        bool   `yaml:"notNull,omitempty"`
-    Unique         bool   `yaml:"unique,omitempty"`
-    Index          bool   `yaml:"index,omitempty"`
-    Default        string `yaml:"default,omitempty"`
-    JSON           string `yaml:"json,omitempty"` // 自定义 JSON tag
-    ForeignKey     string `yaml:"foreignKey,omitempty"`
-    OnDelete       string `yaml:"onDelete,omitempty"`
-    OnUpdate       string `yaml:"onUpdate,omitempty"`
-    Comment        string `yaml:"comment,omitempty"`
-    AutoCreateTime bool   `yaml:"autoCreateTime,omitempty"`
-    AutoUpdateTime bool   `yaml:"autoUpdateTime,omitempty"`
+	Name           string `yaml:"name"`
+	Type           string `yaml:"type"`
+	Size           int    `yaml:"size,omitempty"`
+	PrimaryKey     bool   `yaml:"primary,omitempty"`
+	AutoIncrement  bool   `yaml:"autoIncrement,omitempty"`
+	NotNull        bool   `yaml:"notNull,omitempty"`
+	Unique         bool   `yaml:"unique,omitempty"`
+	Index          bool   `yaml:"index,omitempty"`
+	Default        string `yaml:"default,omitempty"`
+	JSON           string `yaml:"json,omitempty"` // 自定义 JSON tag
+	ForeignKey     string `yaml:"foreignKey,omitempty"`
+	OnDelete       string `yaml:"onDelete,omitempty"`
+	OnUpdate       string `yaml:"onUpdate,omitempty"`
+	Comment        string `yaml:"comment,omitempty"`
+	AutoCreateTime bool   `yaml:"autoCreateTime,omitempty"`
+	AutoUpdateTime bool   `yaml:"autoUpdateTime,omitempty"`
 }
 
 // IndexDef represents an index definition
@@ -295,16 +295,16 @@ func (s *Spec) GetEndpointsByModel(modelName string) []APIEndpoint {
 
 // containsModelName checks if handler name contains model name
 func containsModelName(handler, modelName string) bool {
-    h := strings.ToLower(handler)
-    m := strings.ToLower(modelName)
-    // basic contains
-    if strings.Contains(h, m) {
-        return true
-    }
-    // plural forms
-    plural := m + "s"
-    if strings.HasSuffix(m, "y") {
-        plural = m[:len(m)-1] + "ies"
-    }
-    return strings.Contains(h, plural)
+	h := strings.ToLower(handler)
+	m := strings.ToLower(modelName)
+	// basic contains
+	if strings.Contains(h, m) {
+		return true
+	}
+	// plural forms
+	plural := m + "s"
+	if strings.HasSuffix(m, "y") {
+		plural = m[:len(m)-1] + "ies"
+	}
+	return strings.Contains(h, plural)
 }

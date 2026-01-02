@@ -507,14 +507,14 @@ func (r *{{.Request.Name}}) Validate() error {
 
 // getBuiltinTemplate 获取内置模板内容
 func getBuiltinTemplate(name string) string {
-    templates := map[string]string{
+	templates := map[string]string{
 		"model.go.tmpl":      modelTemplate,
 		"repository.go.tmpl": repositoryTemplate,
 		"service.go.tmpl":    serviceTemplate,
-        "controller.go.tmpl": controllerTemplate,
-        "routes.go.tmpl":     routesTemplate,
-        "validator.go.tmpl":  validatorTemplate,
-    }
+		"controller.go.tmpl": controllerTemplate,
+		"routes.go.tmpl":     routesTemplate,
+		"validator.go.tmpl":  validatorTemplate,
+	}
 
-    return templates[name]
+	return templates[name]
 }

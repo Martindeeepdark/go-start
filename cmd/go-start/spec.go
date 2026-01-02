@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
 	"github.com/Martindeeepdark/go-start/pkg/spec"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -174,7 +174,7 @@ func runSpecValidate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-    fmt.Println("✅ 规范文件验证通过！")
+	fmt.Println("✅ 规范文件验证通过！")
 	fmt.Println("📊 规范信息:")
 	fmt.Printf("  名称: %s\n", s.Name)
 	fmt.Printf("  版本: %s\n", s.Version)

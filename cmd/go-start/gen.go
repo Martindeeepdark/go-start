@@ -372,10 +372,10 @@ func loadTablesFromConfig(filename string) ([]string, error) {
 
 // expandTableWildcards 展开表名通配符
 // 支持：
-//   *       - 所有表
-//   user*   - 以 user 开头的表
-//   *log    - 以 log 结尾的表
-//   *task*  - 包含 task 的表
+//   - - 所有表
+//     user*   - 以 user 开头的表
+//     *log    - 以 log 结尾的表
+//     *task*  - 包含 task 的表
 func expandTableWildcards(dsn string, tables []string) ([]string, error) {
 	// 先获取所有表
 	allTables, err := gen.ListTables(dsn)

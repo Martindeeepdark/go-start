@@ -111,7 +111,7 @@ func register{{.Name}}Routes(router gin.IRouter) {
 
 	// 执行模板
 	data := map[string]interface{}{
-		"ModulePath":  modulePath,
+		"ModulePath": modulePath,
 		"TableNames": tableNames,
 	}
 

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/spf13/cobra"
 	"github.com/Martindeeepdark/go-start/pkg/wizard"
+	"github.com/spf13/cobra"
 )
 
 //go:embed templates
@@ -86,14 +86,14 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	switch archType {
 	case "mvc":
 		if err := generateMVCProjectWithOptions(projectDir, &wizard.ProjectConfig{
-			ProjectName:  projectName,
-			Module:       module,
-			Description:  "",
-			Database:     "mysql",
-			WithAuth:     true,
-			WithSwagger:  true,
-			WithRedis:    true,
-			ServerPort:   8080,
+			ProjectName: projectName,
+			Module:      module,
+			Description: "",
+			Database:    "mysql",
+			WithAuth:    true,
+			WithSwagger: true,
+			WithRedis:   true,
+			ServerPort:  8080,
 		}); err != nil {
 			return err
 		}

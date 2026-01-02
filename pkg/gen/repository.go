@@ -113,11 +113,11 @@ type {{.ModelName}}Repo interface {
 	defer f.Close()
 
 	data := map[string]interface{}{
-		"TableName":  config.TableName,
-		"ModelName":  config.ModelName,
+		"TableName":   config.TableName,
+		"ModelName":   config.ModelName,
 		"PackageName": config.PackageName,
-		"ModulePath": config.ModulePath,
-		"Indexes":    config.Indexes,
+		"ModulePath":  config.ModulePath,
+		"Indexes":     config.Indexes,
 	}
 
 	if err := t.Execute(f, data); err != nil {
@@ -177,8 +177,8 @@ type {{.ModelName}}Repo interface {
 	}
 
 	data := map[string]interface{}{
-		"ModelName":  config.ModelName,
-		"Indexes":    config.Indexes,
+		"ModelName": config.ModelName,
+		"Indexes":   config.Indexes,
 	}
 
 	if err := t.Execute(f, data); err != nil {

@@ -10,10 +10,10 @@ import (
 
 // ControllerConfig Controller 配置
 type ControllerConfig struct {
-	TableName   string   // 表名
-	ModelName   string   // 模型名称
-	PackageName string   // 包名
-	ModulePath  string   // 模块路径
+	TableName   string // 表名
+	ModelName   string // 模型名称
+	PackageName string // 包名
+	ModulePath  string // 模块路径
 }
 
 // GenerateController 生成 Controller 层代码

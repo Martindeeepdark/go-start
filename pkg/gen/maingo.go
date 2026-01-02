@@ -195,8 +195,8 @@ func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 
 	// 准备模型名称和小驼峰名称的映射
 	type ModelInfo struct {
-		Name            string
-		LowerCamelCase  string
+		Name           string
+		LowerCamelCase string
 	}
 	var modelInfos []ModelInfo
 	for _, name := range modelNames {
@@ -207,9 +207,9 @@ func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 	}
 
 	data := map[string]interface{}{
-		"ModulePath":  modulePath,
-		"ModelNames":  modelNames,
-		"ModelInfos":  modelInfos,
+		"ModulePath": modulePath,
+		"ModelNames": modelNames,
+		"ModelInfos": modelInfos,
 	}
 
 	if err := t.Execute(f, data); err != nil {

@@ -10,11 +10,11 @@ import (
 
 // ServiceConfig Service 配置
 type ServiceConfig struct {
-	TableName   string   // 表名
-	ModelName   string   // 模型名称
-	PackageName string   // 包名
-	ModulePath  string   // 模块路径
-	WithCache   bool     // 是否启用缓存
+	TableName   string // 表名
+	ModelName   string // 模型名称
+	PackageName string // 包名
+	ModulePath  string // 模块路径
+	WithCache   bool   // 是否启用缓存
 }
 
 // GenerateService 生成 Service 层代码
