@@ -122,6 +122,12 @@ func runWizardMode() error {
 		return fmt.Errorf("向导运行失败: %w", err)
 	}
 
+	// 自动检测模块路径（如果向导中没有指定）
+	if config.Module == "" || config.Module == "github.com/yourname/"+config.ProjectName {
+		config.Module = detectModulePath(config.ProjectName)
+		fmt.Printf("📦 自动检测到模块路径: %s\n", config.Module)
+	}
+
 	// 创建项目目录
 	projectDir := filepath.Join(".", config.ProjectName)
 	if err := os.MkdirAll(projectDir, 0755); err != nil {
