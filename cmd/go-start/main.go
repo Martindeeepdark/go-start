@@ -10,7 +10,7 @@ import (
 var (
 	// Version is set by build flags or git tag
 	// If not set, defaults to "dev"
-	Version = "v1.3.3"
+	Version = "v1.3.4"
 )
 
 func main() {
