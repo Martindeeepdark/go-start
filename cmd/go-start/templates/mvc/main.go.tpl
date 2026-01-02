@@ -67,14 +67,65 @@ func main() {
 	var cacheClient *cache.Cache
 	{{end}}
 
-	// Initialize repository layer
+	// ============================================
+	// 依赖注入链 (Dependency Injection)
+	// ============================================
+	//
+	// 说明：
+	//   1. 我们使用简单的手动依赖注入，不使用 Wire/Fx 等库
+	//   2. 依赖关系清晰：DB → Repository → Service → Controller
+	//   3. 构造顺序：从底层到顶层
+	//   4. 使用接口而不是具体类型，便于测试和切换实现
+	//
+	// 依赖图：
+	//   ┌─────────────┐
+	//   │ Controller  │  ← HTTP 请求处理层
+	//   └──────┬──────┘
+	//          │ 依赖
+	//   ┌──────▼──────┐
+	//   │   Service   │  ← 业务逻辑层
+	//   └──────┬──────┘
+	//          │ 依赖
+	//   ┌──────▼──────┐
+	//   │ Repository  │  ← 数据访问层
+	//   └──────┬──────┘
+	//          │ 依赖
+	//   ┌──────▼──────┐
+	//   │     DB      │  ← 数据库
+	//   └─────────────┘
+	//
+	// 为什么使用接口？
+	//   ✅ 易于测试：可以 mock Repository
+	//   ✅ 灵活切换：可以替换不同实现
+	//   ✅ 解耦合：Service 不依赖具体实现
+	//
+	// 示例：测试时 mock Repository
+	//   mockRepo := &MockUserRepository{}
+	//   service := service.NewUserService(mockRepo, nil)
+	//
+	// 示例：切换到不同的数据存储
+	//   var repo repository.UserRepository
+	//   if useRedis {
+	//       repo = repository.NewRedisUserRepository(redis)
+	//   } else {
+	//       repo = repository.NewMySQLUserRepository(db)
+	//   }
+
+	// Step 1: 初始化 Repository 层（依赖 DB）
+	// 说明：Repository 返回接口类型，不是具体类型
 	repo := repository.New(db)
 
-	// Initialize service layer
+	// Step 2: 初始化 Service 层（依赖 Repository 和 Cache）
+	// 说明：Service 依赖 Repository 接口，符合依赖倒置原则（DIP）
 	svc := service.New(repo, cacheClient)
 
-	// Initialize controller layer
+	// Step 3: 初始化 Controller 层（依赖 Service）
+	// 说明：Controller 依赖 Service，处理 HTTP 请求
 	ctrl := controller.New(svc)
+
+	// ============================================
+	// 依赖注入完成
+	// ============================================
 
 	// Initialize router
 	r := router.New()
