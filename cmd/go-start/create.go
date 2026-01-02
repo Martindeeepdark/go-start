@@ -452,7 +452,7 @@ func generateMVCProjectWithOptions(projectDir string, config *wizard.ProjectConf
 		ServerPort  int
 	}{
 		ProjectName: config.ProjectName,
-		Module:      strings.TrimPrefix(config.Module, "github.com/"), // 移除 github.com/ 前缀
+		Module:      config.Module, // 使用完整的模块路径
 		Description: config.Description,
 		Database:    config.Database,
 		WithAuth:    config.WithAuth,

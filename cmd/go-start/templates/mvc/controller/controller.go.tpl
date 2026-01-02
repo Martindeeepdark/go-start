@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/{{.Module}}/internal/service"
+	"{{.Module}}/internal/service"
 )
 
 // Controller represents the controller layer

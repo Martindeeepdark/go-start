@@ -1,8 +1,8 @@
 package application
 
 import (
-	"github.com/{{.Module}}/internal/application/user"
-	"github.com/{{.Module}}/internal/infrastructure/persistence"
+	"{{.Module}}/internal/application/user"
+	"{{.Module}}/internal/infrastructure/persistence"
 )
 
 // Applications 应用服务集合

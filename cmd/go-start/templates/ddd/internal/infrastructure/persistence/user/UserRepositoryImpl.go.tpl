@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
-	"github.com/{{.Module}}/internal/domain/user"
+	"{{.Module}}/internal/domain/user"
 )
 
 // UserRepositoryImpl 用户仓储实现

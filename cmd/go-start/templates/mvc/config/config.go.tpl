@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/spf13/viper"
-	"github.com/{{.Module}}/pkg/database"
+	"{{.Module}}/pkg/database"
 	{{if .WithRedis}}
-	"github.com/{{.Module}}/pkg/cache"
+	"{{.Module}}/pkg/cache"
 	{{end}}
 )
 

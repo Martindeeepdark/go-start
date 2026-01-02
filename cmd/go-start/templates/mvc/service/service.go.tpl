@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/{{.Module}}/internal/repository"
-	"github.com/{{.Module}}/pkg/cache"
+	"{{.Module}}/internal/repository"
+	"{{.Module}}/pkg/cache"
 )
 
 // Service represents the service layer

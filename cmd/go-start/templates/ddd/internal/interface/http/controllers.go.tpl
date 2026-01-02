@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/{{.Module}}/internal/application"
+	"{{.Module}}/internal/application"
 )
 
 // Controllers 控制器集合

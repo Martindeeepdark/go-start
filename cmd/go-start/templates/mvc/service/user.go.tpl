@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/{{.Module}}/internal/model"
-	"github.com/{{.Module}}/internal/repository"
-	"github.com/{{.Module}}/pkg/cache"
+	"{{.Module}}/internal/model"
+	"{{.Module}}/internal/repository"
+	"{{.Module}}/pkg/cache"
 )
 
 // 定义业务错误

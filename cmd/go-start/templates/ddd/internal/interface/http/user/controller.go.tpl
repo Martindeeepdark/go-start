@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/{{.Module}}/internal/application/user"
-	"github.com/{{.Module}}/pkg/httpx/response"
+	"{{.Module}}/internal/application/user"
+	"{{.Module}}/pkg/httpx/response"
 )
 
 // UserController 用户控制器

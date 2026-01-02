@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/{{.Module}}/internal/domain/user"
+	"{{.Module}}/internal/domain/user"
 )
 
 // UserService 用户应用服务

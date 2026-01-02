@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/{{.Module}}/internal/model"
+	"{{.Module}}/internal/model"
 	"gorm.io/gorm"
 )
 

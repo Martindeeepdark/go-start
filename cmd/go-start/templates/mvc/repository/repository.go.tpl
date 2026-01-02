@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/{{.Module}}/pkg/database"
+	"{{.Module}}/pkg/database"
 )
 
 // Repository represents the repository layer

@@ -74,7 +74,7 @@ import (
 
 	"{{.ModulePath}}/internal/application"
 	"{{.ModulePath}}/internal/routes"
-	"go.uber.org/zap"
+	"github.com/gin-gonic/gin"
 )
 
 // @title           {{.ModuleName}} API

@@ -1,8 +1,8 @@
 package persistence
 
 import (
-	"github.com/{{.Module}}/internal/domain/user"
-	"github.com/{{.Module}}/internal/infrastructure/persistence/user"
+	"{{.Module}}/internal/domain/user"
+	"{{.Module}}/internal/infrastructure/persistence/user"
 	"gorm.io/gorm"
 )
 

@@ -4,9 +4,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/{{.Module}}/internal/model"
-	"github.com/{{.Module}}/internal/service"
-	"github.com/{{.Module}}/pkg/httpx/response"
+	"{{.Module}}/internal/model"
+	"{{.Module}}/internal/service"
+	"{{.Module}}/pkg/httpx/response"
 )
 
 // UserController represents the user controller
