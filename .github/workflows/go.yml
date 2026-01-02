@@ -95,19 +95,18 @@ jobs:
         ls -lh bin/
 
         echo "📦 Packaging..."
-        if [ "${{ matrix.goos }}" = "linux" ]; then
-          tar czf "bin/${OUTPUT_NAME}.tar.gz" -C bin "${OUTPUT_NAME}"
-          echo "✅ Created: bin/${OUTPUT_NAME}.tar.gz"
-        elif [ "${{ matrix.goos }}" = "windows" ]; then
-          (cd bin && zip "${OUTPUT_NAME}.zip" "${OUTPUT_NAME}")
-          echo "✅ Created: bin/${OUTPUT_NAME}.zip"
+        cd bin
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          zip "${OUTPUT_NAME}.zip" "${OUTPUT_NAME}"
+          echo "✅ Created: ${OUTPUT_NAME}.zip"
         else
-          tar czf "bin/${OUTPUT_NAME}.tar.gz" -C bin "${OUTPUT_NAME}"
-          echo "✅ Created: bin/${OUTPUT_NAME}.tar.gz"
+          tar czf "${OUTPUT_NAME}.tar.gz" "${OUTPUT_NAME}"
+          echo "✅ Created: ${OUTPUT_NAME}.tar.gz"
         fi
+        cd ..
 
-        echo "📦 Package files:"
-        ls -lh bin/*.{tar.gz,zip} 2>/dev/null || echo "No packages found!"
+        echo "📦 All files in bin/:"
+        ls -lh bin/
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
