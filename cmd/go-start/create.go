@@ -63,10 +63,19 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		module = fmt.Sprintf("github.com/yourname/%s", projectName)
 	}
 
+	// 获取当前工作目录
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("无法获取当前工作目录: %w", err)
+	}
+
 	// Create project directory
 	projectDir := filepath.Join(".", projectName)
 	if err := os.MkdirAll(projectDir, 0755); err != nil {
-		return fmt.Errorf("failed to create project directory: %w", err)
+		return fmt.Errorf("创建项目目录失败: %w\n\n请检查:\n"+
+			"  1. 当前工作目录是否存在: %s\n"+
+			"  2. 是否有创建目录的权限\n"+
+			"  3. 项目名称是否合法", err, cwd)
 	}
 
 	// Normalize architecture type
@@ -115,7 +124,10 @@ func runWizardMode() error {
 	// 创建项目目录
 	projectDir := filepath.Join(".", config.ProjectName)
 	if err := os.MkdirAll(projectDir, 0755); err != nil {
-		return fmt.Errorf("创建项目目录失败: %w", err)
+		cwd, _ := os.Getwd()
+		return fmt.Errorf("创建项目目录失败: %w\n\n请检查:\n"+
+			"  1. 当前工作目录是否存在: %s\n"+
+			"  2. 是否有创建目录的权限", err, cwd)
 	}
 
 	// 根据架构类型生成项目
