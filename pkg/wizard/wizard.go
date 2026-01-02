@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -81,8 +83,10 @@ func (w *Wizard) Run() (*ProjectConfig, error) {
 		return nil, err
 	}
 
-	// 2. 自动生成模块名称 (简化流程,减少新手认知负担)
-	config.Module = fmt.Sprintf("github.com/username/%s", config.ProjectName)
+	// 2. 自动检测模块名称 (智能检测，减少手动输入)
+	if err := w.askModuleName(config); err != nil {
+		return nil, err
+	}
 
 	// 3. 项目描述
 	if err := w.askProjectDescription(config); err != nil {
@@ -158,13 +162,24 @@ func (w *Wizard) askModuleName(config *ProjectConfig) error {
 	fmt.Print("\n📦 步骤 2/9: Go 模块名称\n")
 	fmt.Println("═════════════════════════════════════════")
 
-	defaultModule := fmt.Sprintf("github.com/yourname/%s", config.ProjectName)
+	// 智能检测默认模块路径
+	defaultModule := w.detectModulePath(config.ProjectName)
+
+	// 显示检测结果
+	if defaultModule != config.ProjectName {
+		fmt.Printf("💡 检测到模块路径: \033[36m%s\033[0m\n", defaultModule)
+		fmt.Println("   (如需修改，请输入新的路径)")
+	} else {
+		fmt.Println("💡 未检测到上级模块，将使用相对路径")
+		fmt.Println("   (这是本地开发的推荐方式)")
+	}
+	fmt.Println()
 
 	answer, err := w.ask(Question{
 		Text:     "请输入 Go 模块名称",
 		Default:  defaultModule,
 		Required: true,
-		Hint:     "这是你的 Go 模块路径，通常格式为: github.com/用户名/项目名",
+		Hint:     "本地开发可用项目名，发布可用完整路径如: github.com/用户名/项目名",
 	})
 	if err != nil {
 		return err
@@ -172,6 +187,123 @@ func (w *Wizard) askModuleName(config *ProjectConfig) error {
 
 	config.Module = answer
 	return nil
+}
+
+// detectModulePath 自动检测模块路径
+func (w *Wizard) detectModulePath(projectName string) string {
+	// 1. 尝试从父目录的 go.mod 获取模块路径
+	if parentModule := w.getParentModulePath(); parentModule != "" {
+		// 如果父目录有 go.mod，使用子模块路径
+		return fmt.Sprintf("%s/%s", parentModule, projectName)
+	}
+
+	// 2. 尝试从 git remote 获取
+	if gitRemote := w.getGitRemoteModule(); gitRemote != "" {
+		return gitRemote
+	}
+
+	// 3. 使用项目名（相对路径）
+	return projectName
+}
+
+// getParentModulePath 获取父目录的模块路径
+func (w *Wizard) getParentModulePath() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+
+	// 向上查找 go.mod 文件
+	for {
+		goModPath := filepath.Join(dir, "go.mod")
+		if _, err := os.Stat(goModPath); err == nil {
+			// 找到 go.mod，读取模块路径
+			if modulePath := w.extractModulePath(goModPath); modulePath != "" {
+				return modulePath
+			}
+		}
+
+		// 到达根目录
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			break
+		}
+		dir = parentDir
+	}
+
+	return ""
+}
+
+// getGitRemoteModule 尝试从 git remote 获取模块路径
+func (w *Wizard) getGitRemoteModule() string {
+	// 执行 git remote -v 获取远程仓库地址
+	cmd := exec.Command("git", "remote", "-v")
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+
+	// 解析输出，获取 origin URL
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "origin") && strings.Contains(line, "fetch") {
+			// 提取 URL
+			// 格式: origin	https://github.com/username/repo.git (fetch)
+			// 或: origin	git@github.com:username/repo.git (fetch)
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				url := parts[1]
+				// 转换为模块路径
+				if modulePath, ok := w.gitURLToModulePath(url); ok {
+					return modulePath
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+// gitURLToModulePath 将 git URL 转换为 Go 模块路径
+func (w *Wizard) gitURLToModulePath(url string) (string, bool) {
+	// HTTPS 格式: https://github.com/username/repo.git
+	if strings.HasPrefix(url, "https://") {
+		// 移除 https:// 和 .git
+		url = strings.TrimPrefix(url, "https://")
+		url = strings.TrimSuffix(url, ".git")
+		return url, true
+	}
+
+	// SSH 格式: git@github.com:username/repo.git
+	if strings.HasPrefix(url, "git@") {
+		// 移除 git@ 和 .git，替换 : 为 /
+		url = strings.TrimPrefix(url, "git@")
+		url = strings.TrimSuffix(url, ".git")
+		url = strings.Replace(url, ":", "/", 1)
+		return url, true
+	}
+
+	return "", false
+}
+
+// extractModulePath 从 go.mod 文件提取模块路径
+func (w *Wizard) extractModulePath(goModPath string) string {
+	data, err := os.ReadFile(goModPath)
+	if err != nil {
+		return ""
+	}
+
+	// 读取第一行，格式: module xxx
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			modulePath := strings.TrimSpace(strings.TrimPrefix(line, "module "))
+			return modulePath
+		}
+	}
+
+	return ""
 }
 
 // askProjectDescription asks for project description
