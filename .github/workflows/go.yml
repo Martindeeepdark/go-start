@@ -108,11 +108,19 @@ jobs:
         echo "📦 All files in bin/:"
         ls -lh bin/
 
+    - name: Show package files
+      run: |
+        echo "Looking for package files in bin/:"
+        find bin -name "*.tar.gz" -o -name "*.zip" || echo "No package files found!"
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: go-start-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: bin/*.{tar.gz,zip}
+        path: |
+          bin/*.tar.gz
+          bin/*.zip
+        if-no-files-found: error
 
   # Job 3: 发布 Release
   release:
