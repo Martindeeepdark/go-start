@@ -88,14 +88,15 @@ jobs:
           OUTPUT_NAME="${OUTPUT_NAME}.exe"
         fi
         go build -ldflags="-s -w" -o "bin/${OUTPUT_NAME}" ./cmd/go-start
-        cd bin
+        ls -lh bin/
         if [ "${{ matrix.goos }}" = "linux" ]; then
-          tar czf "${OUTPUT_NAME}.tar.gz" "${OUTPUT_NAME}"
+          tar czf "bin/${OUTPUT_NAME}.tar.gz" -C bin "${OUTPUT_NAME}"
         elif [ "${{ matrix.goos }}" = "windows" ]; then
-          zip "${OUTPUT_NAME}.zip" "${OUTPUT_NAME}"
+          (cd bin && zip "${OUTPUT_NAME}.zip" "${OUTPUT_NAME}")
         else
-          tar czf "${OUTPUT_NAME}.tar.gz" "${OUTPUT_NAME}"
+          tar czf "bin/${OUTPUT_NAME}.tar.gz" -C bin "${OUTPUT_NAME}"
         fi
+        ls -lh bin/
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
