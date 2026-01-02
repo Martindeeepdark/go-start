@@ -1,0 +1,152 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+
+  # Job 1: 代码质量检查和测试
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        cache: true
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Run go vet
+      run: go vet ./...
+
+    - name: Run go fmt check
+      run: |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "以下文件需要格式化:"
+          gofmt -d .
+          exit 1
+        fi
+
+    - name: Run tests
+      run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.out
+        flags: unittests
+        name: codecov-umbrella
+
+  # Job 2: 跨平台编译
+  build:
+    needs: test
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        cache: true
+
+    - name: Build
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
+      run: |
+        OUTPUT_NAME="go-start-${{ matrix.goos }}-${{ matrix.goarch }}"
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          OUTPUT_NAME="${OUTPUT_NAME}.exe"
+        fi
+        go build -ldflags="-s -w" -o "bin/${OUTPUT_NAME}" ./cmd/go-start
+        cd bin
+        if [ "${{ matrix.goos }}" = "linux" ]; then
+          tar czf "${OUTPUT_NAME}.tar.gz" "${OUTPUT_NAME}"
+        elif [ "${{ matrix.goos }}" = "windows" ]; then
+          zip "${OUTPUT_NAME}.zip" "${OUTPUT_NAME}.exe"
+        else
+          tar czf "${OUTPUT_NAME}.tar.gz" "${OUTPUT_NAME}"
+        fi
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: go-start-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: bin/*.{tar.gz,zip}
+
+  # Job 3: 发布 Release
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        echo "## 🎉 Release ${{ github.ref_name }}" > release_notes.md
+        echo "" >> release_notes.md
+        echo "### 📦 下载说明" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "选择适合您系统的版本下载：" >> release_notes.md
+        echo "- Linux AMD64: \`go-start-linux-amd64.tar.gz\`" >> release_notes.md
+        echo "- Linux ARM64: \`go-start-linux-arm64.tar.gz\`" >> release_notes.md
+        echo "- macOS AMD64: \`go-start-darwin-amd64.tar.gz\`" >> release_notes.md
+        echo "- macOS ARM64 (Apple Silicon): \`go-start-darwin-arm64.tar.gz\`" >> release_notes.md
+        echo "- Windows AMD64: \`go-start-windows-amd64.zip\`" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### 安装方法" >> release_notes.md
+        echo "\`\`\`bash" >> release_notes.md
+        echo "# 解压下载的文件" >> release_notes.md
+        echo "tar xzf go-start-*.tar.gz" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "# 移动到 PATH 目录" >> release_notes.md
+        echo "mv go-start /usr/local/bin/" >> release_notes.md
+        echo "chmod +x /usr/local/bin/go-start" >> release_notes.md
+        echo "\`\`\`" >> release_notes.md
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        files: artifacts/*/*.{tar.gz,zip}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
