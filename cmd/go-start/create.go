@@ -164,39 +164,39 @@ func showSuccessMessage(config *wizard.ProjectConfig) {
 	fmt.Printf("  架构:    %s\n", getArchitectureLabel(config.Architecture))
 	fmt.Println(strings.Repeat("─", 50))
 
-	fmt.Println("\n🚀 下一步操作:")
+	fmt.Print("\n🚀 下一步操作:\n")
 	fmt.Println(strings.Repeat("─", 50))
 
 	// 步骤 1
-	fmt.Println("\n  1️⃣  进入项目目录:")
+	fmt.Print("\n  1️⃣  进入项目目录:\n")
 	fmt.Printf("     \033[36mcd %s\033[0m\n", config.ProjectName)
 
 	// 步骤 2
-	fmt.Println("\n  2️⃣  下载依赖:")
+	fmt.Print("\n  2️⃣  下载依赖:\n")
 	fmt.Println("     \033[36mgo mod tidy\033[0m")
 
 	// 步骤 3
-	fmt.Println("\n  3️⃣  配置数据库:")
+	fmt.Print("\n  3️⃣  配置数据库:\n")
 	fmt.Println("     \033[36mcp config.yaml.example config.yaml\033[0m")
 	fmt.Println("     \033[90m# 然后编辑 config.yaml 配置你的数据库连接\033[0m")
 
 	// 步骤 4
-	fmt.Println("\n  4️⃣  运行项目:")
+	fmt.Print("\n  4️⃣  运行项目:\n")
 	fmt.Println("     \033[36mgo run cmd/server/main.go\033[0m")
 
 	// 额外提示
 	if config.WithAuth {
-		fmt.Println("\n🔐 认证系统已启用:")
+		fmt.Print("\n🔐 认证系统已启用:\n")
 		fmt.Println("     • JWT Token 认证")
 		fmt.Println("     • 用户注册/登录接口: POST /api/v1/auth/register, /api/v1/auth/login")
 	}
 
 	if config.WithSwagger {
-		fmt.Println("\n📚 Swagger 文档已启用:")
+		fmt.Print("\n📚 Swagger 文档已启用:\n")
 		fmt.Printf("     • 访问地址: http://localhost:%d/swagger/index.html\033[0m\n", config.ServerPort)
 	}
 
-	fmt.Println("\n💡 提示:")
+	fmt.Print("\n💡 提示:\n")
 	fmt.Println("     • 查看 README.md 了解更多使用说明")
 	fmt.Println("     • 运行 'go-start help' 查看所有命令")
 	fmt.Println(strings.Repeat("─", 50))

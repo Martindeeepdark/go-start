@@ -60,29 +60,29 @@ func runRun(cmd *cobra.Command, args []string, verbose bool) error {
 	}
 
 	// 3. 下载依赖
-	fmt.Println("\n📦 正在检查并下载依赖...")
+	fmt.Print("\n📦 正在检查并下载依赖...\n")
 	if err := goModTidy(); err != nil {
 		return fmt.Errorf("❌ go mod tidy 失败: %w", err)
 	}
 	fmt.Println("✅ 依赖下载完成")
 
 	// 4. 启动服务
-	fmt.Println("\n🚀 准备启动服务...")
+	fmt.Print("\n🚀 准备启动服务...\n")
 	if hasCommand("air") {
 		if verbose {
 			fmt.Println("🔥 使用热加载模式运行 (air)...")
-			fmt.Println("💡 提示: 代码修改会自动重启服务\n")
+			fmt.Print("💡 提示: 代码修改会自动重启服务\n")
 		} else {
-			fmt.Println("🔥 使用热加载模式运行 (air)...\n")
+			fmt.Print("🔥 使用热加载模式运行 (air)...\n")
 		}
 		return runWithAir(verbose)
 	}
 
 	if verbose {
 		fmt.Println("▶️  运行项目 (无热加载)")
-		fmt.Println("💡 提示: 安装 air 以支持热加载: go install github.com/cosmtrek/air@latest\n")
+		fmt.Print("💡 提示: 安装 air 以支持热加载: go install github.com/cosmtrek/air@latest\n")
 	} else {
-		fmt.Println("▶️  运行项目 (无热加载)\n")
+		fmt.Print("▶️  运行项目 (无热加载)\n")
 	}
 	return runDirectly(verbose)
 }

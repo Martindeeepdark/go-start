@@ -34,7 +34,7 @@ func newDoctorCmd() *cobra.Command {
 }
 
 func runDoctor(cmd *cobra.Command, args []string) error {
-	fmt.Println(`
+	fmt.Print(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║   🔍 go-start 环境诊断工具                                ║
@@ -65,7 +65,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	checkProjectConfig()
 
 	// 总结
-	fmt.Println(`
+	fmt.Print(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 `)

@@ -169,15 +169,15 @@ func runGenDb(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("生成代码失败: %w", err)
 	}
 
-	fmt.Println("\n✅ 代码生成完成！")
-	fmt.Println("\n📦 已生成:")
+	fmt.Print("\n✅ 代码生成完成！\n")
+	fmt.Print("\n📦 已生成:\n")
 	fmt.Println("  ✓ Model (数据模型)")
 	fmt.Println("  ✓ Repository (数据访问层 + CRUD + 高级查询)")
 	fmt.Println("  ✓ Service (业务逻辑层 + 缓存)")
 	fmt.Println("  ✓ Controller (HTTP 处理器 + RESTful API)")
 	fmt.Println("  ✓ Routes (路由注册)")
 
-	fmt.Println("\n🚀 下一步:")
+	fmt.Print("\n🚀 下一步:\n")
 	fmt.Println("  1. 检查生成的代码")
 	fmt.Println("  2. 在 Service 层添加自定义业务逻辑")
 	fmt.Println("  3. 在 main.go 中注册路由: import internal/routes")
@@ -207,7 +207,7 @@ func runGenSql(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("生成代码失败: %w", err)
 	}
 
-	fmt.Println("\n✅ 代码生成完成！")
+	fmt.Print("\n✅ 代码生成完成！\n")
 
 	return nil
 }
@@ -238,7 +238,7 @@ func selectTablesInteractive(dsn string) ([]string, error) {
 			i+1, table.Name, comment, table.FieldsCount, table.IndexesCount)
 	}
 
-	fmt.Println("\n📝 请选择要生成的表：")
+	fmt.Print("\n📝 请选择要生成的表：\n")
 	fmt.Println("   方式：")
 	fmt.Println("   - 输入序号（逗号分隔）: 1,2,3")
 	fmt.Println("   - 输入范围: 1-5")

@@ -63,7 +63,7 @@ func (w *Wizard) Run() (*ProjectConfig, error) {
 		}
 	}
 
-	fmt.Println(`
+	fmt.Print(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║   🚀 欢迎使用 go-start 交互式项目创建向导                  ║
@@ -132,7 +132,7 @@ func (w *Wizard) Run() (*ProjectConfig, error) {
 
 // askProjectName asks for the project name
 func (w *Wizard) askProjectName(config *ProjectConfig) error {
-	fmt.Println("\n📦 步骤 1/8: 项目名称")
+	fmt.Print("\n📦 步骤 1/8: 项目名称\n")
 	fmt.Println("═════════════════════════════════════════")
 
 	for {
@@ -155,7 +155,7 @@ func (w *Wizard) askProjectName(config *ProjectConfig) error {
 
 // askModuleName asks for the Go module name
 func (w *Wizard) askModuleName(config *ProjectConfig) error {
-	fmt.Println("\n📦 步骤 2/9: Go 模块名称")
+	fmt.Print("\n📦 步骤 2/9: Go 模块名称\n")
 	fmt.Println("═════════════════════════════════════════")
 
 	defaultModule := fmt.Sprintf("github.com/yourname/%s", config.ProjectName)
@@ -176,7 +176,7 @@ func (w *Wizard) askModuleName(config *ProjectConfig) error {
 
 // askProjectDescription asks for project description
 func (w *Wizard) askProjectDescription(config *ProjectConfig) error {
-	fmt.Println("\n📝 步骤 2/8: 项目描述")
+	fmt.Print("\n📝 步骤 2/8: 项目描述\n")
 	fmt.Println("═════════════════════════════════════════")
 
 	answer, err := w.ask(Question{
@@ -195,7 +195,7 @@ func (w *Wizard) askProjectDescription(config *ProjectConfig) error {
 
 // askArchitecture asks for the architecture pattern
 func (w *Wizard) askArchitecture(config *ProjectConfig) error {
-	fmt.Println("\n🏗️  步骤 3/8: 架构模式")
+	fmt.Print("\n🏗️  步骤 3/8: 架构模式\n")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("选择你的项目架构模式：")
 	fmt.Println("  1️⃣  MVC (Model-View-Controller)")
@@ -231,7 +231,7 @@ func (w *Wizard) askArchitecture(config *ProjectConfig) error {
 
 // askDatabase asks for the database type
 func (w *Wizard) askDatabase(config *ProjectConfig) error {
-	fmt.Println("\n🗄️  步骤 4/8: 数据库类型")
+	fmt.Print("\n🗄️  步骤 4/8: 数据库类型\n")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("选择你使用的数据库：")
 	fmt.Println("  1️⃣  MySQL")
@@ -270,7 +270,7 @@ func (w *Wizard) askDatabase(config *ProjectConfig) error {
 
 // askRedis asks if Redis is needed
 func (w *Wizard) askRedis(config *ProjectConfig) error {
-	fmt.Println("\n⚡ 步骤 5/8: Redis 缓存")
+	fmt.Print("\n⚡ 步骤 5/8: Redis 缓存\n")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("Redis 是一个高性能的键值存储系统，可用于：")
 	fmt.Println("  • 缓存热点数据")
@@ -294,7 +294,7 @@ func (w *Wizard) askRedis(config *ProjectConfig) error {
 
 // askAuth asks if authentication is needed
 func (w *Wizard) askAuth(config *ProjectConfig) error {
-	fmt.Println("\n🔐 步骤 6/8: 用户认证系统")
+	fmt.Print("\n🔐 步骤 6/8: 用户认证系统\n")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("是否需要内置的用户认证系统？")
 	fmt.Println("  包含功能：")
@@ -319,7 +319,7 @@ func (w *Wizard) askAuth(config *ProjectConfig) error {
 
 // askSwagger asks if Swagger documentation is needed
 func (w *Wizard) askSwagger(config *ProjectConfig) error {
-	fmt.Println("\n📚 步骤 7/8: API 文档")
+	fmt.Print("\n📚 步骤 7/8: API 文档\n")
 	fmt.Println("═════════════════════════════════════════")
 	fmt.Println("是否需要自动生成 Swagger API 文档？")
 	fmt.Println("  优势：")
@@ -343,7 +343,7 @@ func (w *Wizard) askSwagger(config *ProjectConfig) error {
 
 // askServerPort asks for the server port
 func (w *Wizard) askServerPort(config *ProjectConfig) error {
-	fmt.Println("\n🔌 步骤 8/8: 服务器端口")
+	fmt.Print("\n🔌 步骤 8/8: 服务器端口\n")
 	fmt.Println("═════════════════════════════════════════")
 
 	answer, err := w.ask(Question{
@@ -389,7 +389,7 @@ func (w *Wizard) showSummary(config *ProjectConfig) {
 
 // confirmCreation asks for final confirmation
 func (w *Wizard) confirmCreation(config *ProjectConfig) error {
-	fmt.Println("\n✨ 准备创建项目！")
+	fmt.Print("\n✨ 准备创建项目！\n")
 
 	answer, err := w.ask(Question{
 		Text:     "确认创建项目？(y/n)",
