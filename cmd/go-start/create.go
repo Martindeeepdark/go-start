@@ -58,9 +58,10 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid project name: %s", projectName)
 	}
 
-	// Set default module name
+	// 自动检测模块路径
 	if module == "" {
-		module = fmt.Sprintf("github.com/yourname/%s", projectName)
+		module = detectModulePath(projectName)
+		fmt.Printf("📦 使用模块路径: %s\n", module)
 	}
 
 	// 获取当前工作目录
@@ -396,6 +397,68 @@ func isValidProjectName(name string) bool {
 	}
 	// Basic validation: should not contain path separators
 	return !strings.ContainsAny(name, "/\\")
+}
+
+// detectModulePath 自动检测模块路径
+func detectModulePath(projectName string) string {
+	// 1. 尝试从父目录的 go.mod 获取模块路径
+	if parentModule := getParentModulePath(); parentModule != "" {
+		// 如果父目录有 go.mod，使用子模块路径
+		return fmt.Sprintf("%s/%s", parentModule, projectName)
+	}
+
+	// 2. 使用相对路径（最简单的方式）
+	return projectName
+}
+
+// getParentModulePath 获取父目录的模块路径
+func getParentModulePath() string {
+	// 向上查找 go.mod 文件
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+
+	for {
+		goModPath := filepath.Join(dir, "go.mod")
+		if _, err := os.Stat(goModPath); err == nil {
+			// 找到 go.mod，读取模块路径
+			if modulePath := extractModulePath(goModPath); modulePath != "" {
+				return modulePath
+			}
+		}
+
+		// 到达根目录
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			break
+		}
+		dir = parentDir
+	}
+
+	return ""
+}
+
+// extractModulePath 从 go.mod 文件提取模块路径
+func extractModulePath(goModPath string) string {
+	data, err := os.ReadFile(goModPath)
+	if err != nil {
+		return ""
+	}
+
+	// 读取第一行，格式: module xxx
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			modulePath := strings.TrimSpace(strings.TrimPrefix(line, "module "))
+			// 移除引号（如果有）
+			modulePath = strings.Trim(modulePath, `"`)
+			return modulePath
+		}
+	}
+
+	return ""
 }
 
 func getTemplateDir() string {
