@@ -165,13 +165,23 @@ func (w *Wizard) askModuleName(config *ProjectConfig) error {
 	// 智能检测默认模块路径
 	defaultModule := w.detectModulePath(config.ProjectName)
 
-	// 显示检测结果
+	// 显示检测结果和建议
+	fmt.Println("💡 模块路径说明：")
+	fmt.Println("   - 本地开发：直接使用项目名（推荐）")
+	fmt.Println("   - 发布到 GitHub：使用 github.com/用户名/项目名")
+	fmt.Println()
+
 	if defaultModule != config.ProjectName {
-		fmt.Printf("💡 检测到模块路径: \033[36m%s\033[0m\n", defaultModule)
-		fmt.Println("   (如需修改，请输入新的路径)")
+		// 检测到了特殊路径（如 git remote 或 monorepo）
+		fmt.Printf("检测到建议路径: \033[36m%s\033[0m\n", defaultModule)
+		fmt.Println("可以直接回车使用，或输入自定义路径")
 	} else {
-		fmt.Println("💡 未检测到上级模块，将使用相对路径")
-		fmt.Println("   (这是本地开发的推荐方式)")
+		// 普通情况，使用项目名
+		fmt.Printf("推荐使用项目名: \033[36m%s\033[0m\n", config.ProjectName)
+		fmt.Println("这是最简单的方式，适合本地开发")
+		fmt.Println()
+		fmt.Println("如果需要发布到 GitHub，可以使用：")
+		fmt.Printf("  \033[90mgithub.com/用户名/%s\033[0m\n", config.ProjectName)
 	}
 	fmt.Println()
 
@@ -179,7 +189,7 @@ func (w *Wizard) askModuleName(config *ProjectConfig) error {
 		Text:     "请输入 Go 模块名称",
 		Default:  defaultModule,
 		Required: true,
-		Hint:     "本地开发可用项目名，发布可用完整路径如: github.com/用户名/项目名",
+		Hint:     "本地开发用项目名，GitHub 发布用完整路径",
 	})
 	if err != nil {
 		return err
@@ -191,15 +201,51 @@ func (w *Wizard) askModuleName(config *ProjectConfig) error {
 
 // detectModulePath 自动检测模块路径
 func (w *Wizard) detectModulePath(projectName string) string {
-	// 1. 尝试从父目录的 go.mod 获取模块路径
-	if parentModule := w.getParentModulePath(); parentModule != "" {
-		// 如果父目录有 go.mod，使用子模块路径
-		return fmt.Sprintf("%s/%s", parentModule, projectName)
-	}
-
-	// 2. 尝试从 git remote 获取
+	// 1. 尝试从 git remote 获取（最可靠）
 	if gitRemote := w.getGitRemoteModule(); gitRemote != "" {
 		return gitRemote
+	}
+
+	// 2. 检查父目录是否有 go.mod
+	parentModule := w.getParentModulePath()
+	if parentModule != "" {
+		// 判断是否应该使用父模块路径
+		// 启发式规则：
+		// - 如果父模块路径看起来像是一个 monorepo（包含多个项目）
+		// - 或者父模块明显是工作空间/基础库
+		// 才使用父模块/项目名的形式
+		//
+		// 否则，大多数情况下用户只是想创建独立项目
+		// 应该直接使用项目名或简单的路径
+
+		// 检查父模块路径是否包含常见的关键词
+		// 如果包含这些词，说明是 monorepo 结构，使用子模块路径
+		parentPathLower := strings.ToLower(parentModule)
+		monorepoKeywords := []string{
+			"monorepo", "workspace", "platform", "infra",
+			"backend", "frontend", "services", "apps",
+		}
+
+		isMonorepo := false
+		for _, keyword := range monorepoKeywords {
+			if strings.Contains(parentPathLower, keyword) {
+				isMonorepo = true
+				break
+			}
+		}
+
+		// 检查父模块路径深度（超过3级可能是 monorepo）
+		pathDepth := strings.Count(parentModule, "/")
+		isDeepPath := pathDepth >= 3
+
+		if isMonorepo || isDeepPath {
+			// Monorepo 结构，使用子模块路径
+			return fmt.Sprintf("%s/%s", parentModule, projectName)
+		}
+
+		// 不是 monorepo，直接使用项目名
+		// 这种情况更适合作为独立项目
+		return projectName
 	}
 
 	// 3. 使用项目名（相对路径）
