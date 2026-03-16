@@ -17,7 +17,6 @@ var (
 	genSQLFile      string
 	genInteractive  bool
 	genConfig       string
-	genArchitecture string // 架构类型：mvc 或 ddd
 	genModule       string // Go 模块路径
 )
 
@@ -27,10 +26,9 @@ func newGenCmd() *cobra.Command {
 		Short: "从数据库生成 CRUD 代码",
 		Long: `自动生成完整的 CRUD 代码，让你专注于业务逻辑。
 
-支持三种生成模式：
+支持两种生成模式：
   1. 从现有数据库生成 (gen db)
   2. 从 SQL 文件生成 (gen sql)
-  3. 从 spec 文件生成 (spec generate)
 
 生成的代码包括：
   - Model (数据模型)
@@ -73,7 +71,6 @@ func newGenDbCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&genInteractive, "interactive", false, "交互式选择表（推荐）")
 	cmd.Flags().StringVar(&genConfig, "config", "", "从配置文件读取表列表")
 	cmd.Flags().StringVar(&genOutput, "output", "./internal", "输出目录")
-	cmd.Flags().StringVar(&genArchitecture, "arch", "mvc", "架构类型 (mvc 或 ddd)")
 	cmd.Flags().StringVar(&genModule, "module", "", "Go 模块路径 (如: github.com/user/my-api)")
 
 	return cmd
@@ -141,28 +138,13 @@ func runGenDb(cmd *cobra.Command, args []string) error {
 	fmt.Printf("\n🔌 正在连接数据库...\n")
 	fmt.Printf("📊 DSN: %s\n", maskDSN(genDSN))
 	fmt.Printf("📋 将生成 %d 张表: %s\n", len(tables), strings.Join(tables, ", "))
-	fmt.Printf("🏗️  架构模式: %s\n\n", strings.ToUpper(genArchitecture))
-
-	// 根据架构类型创建生成器
-	if genArchitecture == "ddd" {
-		// DDD 架构
-		generator := gen.NewDDDGenerator(gen.Config{
-			DSN:    genDSN,
-			Tables: tables,
-			Output: genOutput,
-			Module: genModule,
-		})
-		err = generator.Generate()
-	} else {
-		// MVC 架构（默认）
-		generator := gen.NewDatabaseGenerator(gen.Config{
-			DSN:    genDSN,
-			Tables: tables,
-			Output: genOutput,
-			Module: genModule,
-		})
-		err = generator.Generate()
-	}
+	generator := gen.NewDatabaseGenerator(gen.Config{
+		DSN:    genDSN,
+		Tables: tables,
+		Output: genOutput,
+		Module: genModule,
+	})
+	err = generator.Generate()
 
 	// 生成代码
 	if err != nil {
