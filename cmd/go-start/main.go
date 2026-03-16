@@ -15,9 +15,9 @@ var (
 
 func main() {
 	var rootCmd = &cobra.Command{
-		Use:   "go-start",
-		Short: "Go Web 项目脚手架 & 代码生成器",
-		Long: `go-start 帮助你快速创建基于 Gin 框架的 Go Web 项目，并可从数据库自动生成完整的 CRUD API。`,
+		Use:     "go-start",
+		Short:   "Go Web 项目脚手架 & 代码生成器",
+		Long:    `go-start 帮助你快速创建基于 Gin 框架的 Go Web 项目，并可从数据库自动生成完整的 CRUD API。`,
 		Version: Version,
 	}
 

@@ -138,7 +138,7 @@ func getIntEnv(key string, defaultVal int) int {
 `
 
 	type ModelInfo struct {
-		Name          string
+		Name           string
 		LowerCamelCase string
 	}
 
