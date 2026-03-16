@@ -11,13 +11,13 @@ import (
 )
 
 var (
-	genDSN          string
-	genTables       string
-	genOutput       string
-	genSQLFile      string
-	genInteractive  bool
-	genConfig       string
-	genModule       string // Go 模块路径
+	genDSN         string
+	genTables      string
+	genOutput      string
+	genSQLFile     string
+	genInteractive bool
+	genConfig      string
+	genModule      string // Go 模块路径
 )
 
 func newGenCmd() *cobra.Command {
