@@ -206,10 +206,16 @@ func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 		})
 	}
 
+	// 从模块路径提取项目名作为标题
+	moduleParts := strings.Split(modulePath, "/")
+	moduleName := moduleParts[len(moduleParts)-1]
+
 	data := map[string]interface{}{
-		"ModulePath": modulePath,
-		"ModelNames": modelNames,
-		"ModelInfos": modelInfos,
+		"ModulePath":  modulePath,
+		"ModuleName":  moduleName,
+		"Description": moduleName + " API service",
+		"ModelNames":  modelNames,
+		"ModelInfos":  modelInfos,
 	}
 
 	if err := t.Execute(f, data); err != nil {

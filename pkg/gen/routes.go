@@ -68,7 +68,7 @@ func RegisterRoutes(r *gin.Engine) {
 // register{{.Name}}Routes 注册 {{.Name}} 相关路由
 func register{{.Name}}Routes(router gin.IRouter) {
 	// 从 application 包获取已初始化的 Service
-	ctrl := controller.New{{.Name}}Controller(application.{{ToLowerCamelCase .Name}}Service)
+	ctrl := controller.New{{.Name}}Controller(application.{{.Name}}Service)
 
 	group := router.Group("/{{ToLowerCamelCase .Name}}s")
 	{

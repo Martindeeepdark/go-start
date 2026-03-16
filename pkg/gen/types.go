@@ -375,13 +375,20 @@ func extractModulePath(goModPath string) string {
 	return ""
 }
 
-// toModelName 表名转模型名
+// toModelName 表名转模型名（自动去复数）
 func toModelName(tableName string) string {
-	// users -> Users
-	// user_profiles -> UserProfile
+	// users -> User, accounts -> Account, user_profiles -> UserProfile
 	parts := strings.Split(tableName, "_")
 	for i, part := range parts {
-		if i > 0 || len(part) > 0 {
+		if len(part) > 0 {
+			// 去复数：以 s 结尾且不是 ss 结尾
+			if strings.HasSuffix(part, "ies") && len(part) > 3 {
+				part = part[:len(part)-3] + "y" // categories -> category
+			} else if strings.HasSuffix(part, "sses") {
+				part = part[:len(part)-2] // addresses -> address
+			} else if strings.HasSuffix(part, "s") && !strings.HasSuffix(part, "ss") && len(part) > 2 {
+				part = part[:len(part)-1] // users -> user, accounts -> account
+			}
 			parts[i] = strings.ToUpper(part[:1]) + part[1:]
 		}
 	}

@@ -37,17 +37,15 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"{{.ModulePath}}/internal/controller"
 	"{{.ModulePath}}/internal/repository"
-	"{{.ModulePath}}/internal/routes"
 	"{{.ModulePath}}/internal/service"
 )
 
 var (
 	DB *gorm.DB
 {{range .ModelInfos}}
-	{{.LowerCamelCase}}Repo    *repository.{{.Name}}Repository
-	{{.LowerCamelCase}}Service *service.{{.Name}}Service
+	{{.LowerCamelCase}}Repo *repository.{{.Name}}Repository
+	{{.Name}}Service       *service.{{.Name}}Service
 {{end}}
 )
 
@@ -102,21 +100,7 @@ func initRepositories() {
 
 func initServices() {
 {{range .ModelInfos}}
-	{{.LowerCamelCase}}Service = service.New{{.Name}}Service({{.LowerCamelCase}}Repo)
-{{end}}
-}
-
-func GetControllers() []interface{} {
-	return []interface{}{
-{{range .ModelInfos}}
-		controller.New{{.Name}}Controller({{.LowerCamelCase}}Service),
-{{end}}
-	}
-}
-
-func RegisterRoutes(r interface{ Group(string, ...interface{}) interface{} }) {
-{{range .ModelInfos}}
-	routes.Register{{.Name}}Routes(r.(interface{ Group(string, ...interface{}) interface{} }), controller.New{{.Name}}Controller({{.LowerCamelCase}}Service))
+	{{.Name}}Service = service.New{{.Name}}Service({{.LowerCamelCase}}Repo)
 {{end}}
 }
 
