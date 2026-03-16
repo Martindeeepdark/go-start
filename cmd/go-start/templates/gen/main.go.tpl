@@ -2,15 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"runtime/debug"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"{{.ModulePath}}/internal/application"
 	"{{.ModulePath}}/internal/routes"
-	"github.com/gin-gonic/gin"
 )
 
 // @title           {{.ModuleName}} API

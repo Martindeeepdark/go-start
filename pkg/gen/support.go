@@ -6,92 +6,28 @@ import (
 	"path/filepath"
 )
 
-// GenerateSupportPackages 生成支持包（cache, model, response）
+// GenerateSupportPackages 生成支持包（model, response）
 func (g *DatabaseGenerator) GenerateSupportPackages() error {
 	modulePath := getModulePath(g.config.Module)
 
 	fmt.Println("📦 正在生成支持包...")
 
-	// 1. pkg/cache
-	if err := g.generateCachePackage(modulePath); err != nil {
-		return err
-	}
-
-	// 2. internal/dal/model
+	// 1. internal/dal/model
 	if err := g.generateDalModelPackage(modulePath); err != nil {
 		return err
 	}
 
-	// 3. internal/model
+	// 2. internal/model
 	if err := g.generateModelPackage(modulePath); err != nil {
 		return err
 	}
 
-	// 4. pkg/httpx/response
+	// 3. pkg/httpx/response
 	if err := g.generateResponsePackage(modulePath); err != nil {
 		return err
 	}
 
 	fmt.Println("     ✓ 所有支持包创建成功")
-	return nil
-}
-
-// generateCachePackage 生成 cache 包
-func (g *DatabaseGenerator) generateCachePackage(modulePath string) error {
-	outputDir := filepath.Join(g.config.Output, "pkg", "cache")
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return err
-	}
-
-	outputPath := filepath.Join(outputDir, "cache.go")
-
-	content := fmt.Sprintf(`package cache
-
-import (
-	"context"
-	"time"
-)
-
-// Cache 简单的缓存接口
-type Cache struct {
-	// TODO: 实现 Redis 缓存
-	// 这里提供一个简单实现，实际使用时可以替换为 Redis
-}
-
-// New 创建一个新的缓存实例
-func New() *Cache {
-	return &Cache{}
-}
-
-// Set 设置缓存
-func (c *Cache) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
-	// TODO: 实现 Redis SET
-	return nil
-}
-
-// Get 获取缓存
-func (c *Cache) Get(ctx context.Context, key string) (string, error) {
-	// TODO: 实现 Redis GET
-	return "", nil
-}
-
-// Del 删除缓存
-func (c *Cache) Del(ctx context.Context, keys ...string) error {
-	// TODO: 实现 Redis DEL
-	return nil
-}
-
-// Close 关闭缓存连接
-func (c *Cache) Close() error {
-	// TODO: 关闭 Redis 连接
-	return nil
-}
-`)
-
-	if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("写入 cache.go 失败: %w", err)
-	}
-
 	return nil
 }
 

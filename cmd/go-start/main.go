@@ -16,15 +16,12 @@ var (
 func main() {
 	var rootCmd = &cobra.Command{
 		Use:   "go-start",
-		Short: "快速创建 Go Web 项目的脚手架工具",
-		Long: `go-start 是一个命令行工具,帮助你快速创建基于 Gin 框架的 Go Web 项目
-支持 MVC 和 DDD 两种架构模式,可以从数据库自动生成完整的 CRUD API。`,
+		Short: "Go Web 项目脚手架 & 代码生成器",
+		Long: `go-start 帮助你快速创建基于 Gin 框架的 Go Web 项目，并可从数据库自动生成完整的 CRUD API。`,
 		Version: Version,
 	}
 
 	rootCmd.AddCommand(newCreateCmd())
-	rootCmd.AddCommand(newRunCmd())
-	rootCmd.AddCommand(newSpecCmd())
 	rootCmd.AddCommand(newGenCmd())
 	rootCmd.AddCommand(newDoctorCmd())
 	rootCmd.AddCommand(newVersionCmd())

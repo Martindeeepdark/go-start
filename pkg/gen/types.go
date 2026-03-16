@@ -290,20 +290,14 @@ func (g *DatabaseGenerator) generateRepositoryLayer() error {
 
 // generateServiceLayer 生成 Service 层
 func (g *DatabaseGenerator) generateServiceLayer() error {
-	// TODO: 从配置读取是否启用缓存
-	withCache := true // 默认启用缓存
-
 	for _, tableName := range g.config.Tables {
-		// 简单的表名转模型名
 		modelName := toModelName(tableName)
 
-		// 配置 Service 生成
 		config := ServiceConfig{
 			TableName:   tableName,
 			ModelName:   modelName,
 			PackageName: "service",
 			ModulePath:  getModulePath(g.config.Module),
-			WithCache:   withCache,
 		}
 
 		if err := g.GenerateService(TableInfo{Name: tableName}, config); err != nil {

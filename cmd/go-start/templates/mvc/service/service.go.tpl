@@ -2,7 +2,6 @@ package service
 
 import (
 	"{{.Module}}/internal/repository"
-	"{{.Module}}/pkg/cache"
 )
 
 // Service represents the service layer
@@ -11,8 +10,8 @@ type Service struct {
 }
 
 // New creates a new service instance
-func New(repo *repository.Repository, cache *cache.Cache) *Service {
+func New(repo *repository.Repository) *Service {
 	return &Service{
-		User: NewUserService(repo.User, cache),
+		User: NewUserService(repo.User),
 	}
 }

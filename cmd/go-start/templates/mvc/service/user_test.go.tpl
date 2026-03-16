@@ -105,8 +105,8 @@ func TestUserService_Create(t *testing.T) {
 	// 1. 创建 mock repository
 	mockRepo := NewMockUserRepository()
 
-	// 2. 创建 service（注入 mock，cache 为 nil）
-	svc := NewUserService(mockRepo, nil)
+	// 2. 创建 service（注入 mock）
+	svc := NewUserService(mockRepo)
 
 	// 3. 准备测试数据
 	user := &model.User{
